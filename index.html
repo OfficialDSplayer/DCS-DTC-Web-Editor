@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMDS Program Editor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    />
+    <style>
+      :root {
+        --bg-color: #f5f5f5;
+        --text-color: #000;
+        --card-bg: #fff;
+        --card-text: #000;
+        --highlight: #666;
+      }
+      [data-theme="dark"] {
+        --bg-color: #121212;
+        --text-color: #f0f0f0;
+        --card-bg: #1e1e1e;
+        --card-text: #f0f0f0;
+        --highlight: #aaa;
+      }
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+        transition: background-color 0.3s, color 0.3s;
+      }
+      .card {
+        background-color: var(--card-bg);
+        color: var(--card-text);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s, color 0.3s;
+      }
+      .subcard {
+        background-color: var(--card-bg);
+        color: var(--card-text);
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      input[type="number"],
+      input[type="text"] {
+        background-color: var(--card-bg);
+        color: var(--card-text);
+        border: 1px solid var(--highlight);
+        padding: 5px;
+        border-radius: 5px;
+        transition: background 0.3s, color 0.3s;
+      }
+      label {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body class="p-6" id="body">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">CMDS Program Configurator</h1>
+      <button onclick="toggleDarkMode()" class="px-4 py-2 rounded border" id="themeToggle">
+        Toggle Dark Mode
+      </button>
+    </div>
+
+    <div class="mb-6">
+      <p class="mb-2 text-sm">
+        By default, the editor loads data from the default configuration file in the repository.
+      </p>
+      <p class="mb-2 text-sm">Optionally, you may upload your own JSON file to edit instead.</p>
+      <input type="file" id="fileInput" accept="application/json" class="mb-4" />
+    </div>
+
+    <div id="configurator" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+    <div class="mt-6">
+      <label class="block mb-2 text-sm">Filename:</label>
+      <input type="text" id="filename" value="CMDS_Custom_Config.json" />
+      <button onclick="downloadJson()" class="ml-2 px-4 py-2 rounded bg-blue-600 text-white">
+        Download JSON
+      </button>
+    </div>
+
+    <script>
+      let jsonData = null;
+      const friendlyNames = {
+        AUTO_1: "Auto Program 1",
+        AUTO_2: "Auto Program 2",
+        AUTO_3: "Auto Program 3",
+        AUTO_4: "Auto Program 4",
+        BYP: "Bypass",
+        MAN_1: "Manual Program 1",
+        MAN_2: "Manual Program 2",
+        MAN_3: "Manual Program 3",
+        MAN_4: "Manual Program 4",
+        SEMI: "Semi-Auto",
+        NONE: "None",
+      };
+
+      function applyTheme() {
+        const theme =
+          localStorage.getItem("theme") ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+        document.getElementById("themeToggle").textContent =
+          theme === "dark" ? "Light Mode" : "Dark Mode";
+      }
+
+      function toggleDarkMode() {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        applyTheme();
+      }
+
+      async function loadDefaultJson() {
+        try {
+          const res = await fetch("FA-18C_Lot20_DTC1_DEFAULT.json");
+          jsonData = await res.json();
+          renderConfigurator();
+        } catch (err) {
+          alert("Failed to load default configuration.");
+        }
+      }
+
+      document.getElementById("fileInput").addEventListener("change", function (e) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            jsonData = JSON.parse(event.target.result);
+            renderConfigurator();
+          } catch {
+            alert("Invalid JSON file.");
+          }
+        };
+        reader.readAsText(e.target.files[0]);
+      });
+
+      function renderConfigurator() {
+        const container = document.getElementById("configurator");
+        container.innerHTML = "";
+        const settings = jsonData.data.ALR67.CMDS.CMDSProgramSettings;
+
+        // Render global delay_between_programs (not part of any one program)
+        if ("delay_between_programs" in settings) {
+          const delayCard = document.createElement("div");
+          delayCard.className = "card";
+
+          const title = document.createElement("h2");
+          title.textContent = "Global Delay Between Programs";
+          title.className = "font-bold text-lg mb-2";
+          delayCard.appendChild(title);
+
+          const wrapper = document.createElement("div");
+          wrapper.className = "flex items-center gap-2";
+
+          const label = document.createElement("label");
+          label.textContent = "Delay (seconds)";
+          label.className = "text-sm";
+          wrapper.appendChild(label);
+
+          const input = document.createElement("input");
+          input.type = "number";
+          input.step = 0.25;
+          input.min = 0;
+          input.max = 99;
+          input.value = settings.delay_between_programs;
+          input.className = "w-24";
+
+          input.oninput = () => {
+            let v = parseFloat(input.value);
+            if (!isNaN(v)) {
+              v = Math.max(0, Math.min(99, Math.round(v / 0.25) * 0.25));
+              input.value = v;
+              settings.delay_between_programs = v;
+            }
+          };
+
+          wrapper.appendChild(input);
+          delayCard.appendChild(wrapper);
+          container.appendChild(delayCard);
+        }
+
+        Object.entries(settings).forEach(([program, fields]) => {
+          // Skip if this entry is not a CMDS program (e.g., not an object or missing expected structure)
+          if (typeof fields !== "object" || !fields.Chaff || !fields.Flare) return;
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const title = document.createElement("h2");
+          title.textContent = friendlyNames[program] || program;
+          title.className = "font-bold text-lg mb-2";
+          card.appendChild(title);
+
+          if (program.startsWith("AUTO_") && typeof fields.delay_between_programs === "number") {
+            const delayWrapper = document.createElement("div");
+            delayWrapper.className = "flex items-center gap-2 mb-2";
+
+            const delayLabel = document.createElement("label");
+            delayLabel.textContent = "Delay Between Programs";
+            delayLabel.className = "text-sm";
+            delayWrapper.appendChild(delayLabel);
+
+            const delayInput = document.createElement("input");
+            delayInput.type = "number";
+            delayInput.min = 0.25;
+            delayInput.max = 10;
+            delayInput.step = 0.25;
+            delayInput.value = fields.delay_between_programs;
+            delayInput.className = "w-24";
+
+            delayInput.oninput = () => {
+              let v = parseFloat(delayInput.value);
+              if (!isNaN(v)) {
+                v = Math.max(0.25, Math.min(10, Math.round(v / 0.25) * 0.25));
+                delayInput.value = v;
+                fields.delay_between_programs = v;
+              }
+            };
+
+            delayWrapper.appendChild(delayInput);
+            card.appendChild(delayWrapper);
+          }
+
+          ["Quantity", "Repeat", "Interval"].forEach((param) => {
+            const row = document.createElement("div");
+            row.className = "flex flex-wrap items-center gap-4 py-1";
+
+            ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
+              if (!fields[type] || fields[type][param] === undefined) return;
+
+              const col = document.createElement("div");
+              col.className = "flex flex-col items-center";
+
+              const label = document.createElement("label");
+              label.textContent = param === "Quantity" ? `${type} Quantity` : param;
+              label.className = "text-xs text-center";
+              col.appendChild(label);
+
+              const input = document.createElement("input");
+              input.type = "number";
+
+              let step = 1,
+                min = 0,
+                max = 100;
+              if (param === "Interval") {
+                step = 0.25;
+                min = 0.25;
+                max = 5;
+              } else if (param === "Repeat") {
+                step = 1;
+                min = 1;
+                max = 24;
+              }
+
+              input.step = step;
+              input.min = min;
+              input.max = max;
+              input.value = fields[type][param];
+
+              input.oninput = () => {
+                let v = parseFloat(input.value);
+                if (!isNaN(v)) {
+                  v = Math.max(min, Math.min(max, Math.round(v / step) * step));
+                  input.value = v;
+                  fields[type][param] = v;
+                }
+              };
+
+              col.appendChild(input);
+              row.appendChild(col);
+            });
+
+            if (row.children.length > 0) card.appendChild(row);
+          });
+
+          container.appendChild(card);
+        });
+      }
+
+      function downloadJson() {
+        const fileName = document.getElementById("filename").value;
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      applyTheme();
+      loadDefaultJson();
+    </script>
+  </body>
+</html>
