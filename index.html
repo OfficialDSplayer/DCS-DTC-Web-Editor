@@ -14,14 +14,12 @@
         --text-color: #000;
         --input-bg: #fff;
         --input-border: #ccc;
-        --highlight: #555;
       }
       [data-theme="dark"] {
         --bg-color: #121212;
         --text-color: #f0f0f0;
         --input-bg: #1e1e1e;
         --input-border: #444;
-        --highlight: #aaa;
       }
       body {
         background-color: var(--bg-color);
@@ -29,26 +27,21 @@
         font-family: Arial, sans-serif;
         transition: background-color 0.3s, color 0.3s;
       }
-      input[type="number"],
-      input[type="text"] {
+      input,
+      select {
         background-color: var(--input-bg);
         color: var(--text-color);
         border: 1px solid var(--input-border);
         padding: 5px;
         border-radius: 4px;
-        width: 80px;
       }
       .section-header {
-        cursor: pointer;
         font-weight: bold;
-        font-size: 1.05rem;
-        margin-bottom: 6px;
+        font-size: 1rem;
+        margin-top: 1.5rem;
       }
       .collapsed {
         display: none;
-      }
-      label {
-        font-size: 0.85rem;
       }
       .program-section {
         border-top: 1px solid var(--input-border);
@@ -59,57 +52,148 @@
   </head>
   <body class="p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">CMDS Program Editor</h1>
+      <h1 class="text-2xl font-bold">CMDS Editor</h1>
       <button onclick="toggleDarkMode()" id="themeToggle" class="px-4 py-2 border rounded">
         Toggle Dark Mode
       </button>
     </div>
 
-    <div class="mb-4">
-      <p class="text-sm">
-        By default, the editor loads data from the default configuration file in the repository.
-      </p>
-      <p class="text-sm">Optionally, you may upload your own JSON file to edit instead.</p>
-      <input type="file" id="fileInput" accept="application/json" class="mt-2" />
+    <div class="mb-4 flex gap-4">
+      <button
+        onclick="switchTab('programTab')"
+        id="tabProgramsBtn"
+        class="px-4 py-2 border rounded bg-blue-600 text-white"
+      >
+        CMDS Programs
+      </button>
+      <button onclick="switchTab('threatTab')" id="tabThreatsBtn" class="px-4 py-2 border rounded">
+        Threat Table
+      </button>
+      <button onclick="switchTab('commTab')" id="tabCommBtn" class="px-4 py-2 border rounded">
+        COMM
+      </button>
     </div>
 
-    <div class="mb-8">
-      <h2 class="font-semibold mb-2">Global AUTO Delay Between Programs</h2>
-      <label for="globalDelay">Delay (sec):</label>
-      <input type="number" id="globalDelay" step="0.25" min="0" max="99" />
-    </div>
+    <input type="file" id="fileInput" accept="application/json" class="mb-4" />
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <div id="autoPrograms">
-        <h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>
+    <!-- PROGRAM SETTINGS TAB -->
+    <div id="programTab">
+      <div class="mb-6">
+        <label class="block mb-1">Global AUTO Delay Between Programs (sec):</label>
+        <input type="number" id="globalDelay" step="0.25" min="0" max="99" />
       </div>
-      <div id="manualPrograms">
-        <h2 class="text-lg font-semibold mb-2">Manual Programs</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div id="autoPrograms">
+          <h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>
+        </div>
+        <div id="manualPrograms">
+          <h2 class="text-lg font-semibold mb-2">Manual Programs</h2>
+        </div>
+      </div>
+    </div>
+    <!-- THREAT TABLE TAB -->
+    <div id="threatTab" class="hidden">
+      <h2 class="text-xl font-bold mb-4">CMDS Threat Table</h2>
+
+      <div class="mb-4 flex gap-2">
+        <button onclick="switchThreatCategory('Air')" class="px-3 py-1 border rounded" id="cat-Air">
+          Air
+        </button>
+        <button
+          onclick="switchThreatCategory('Ground')"
+          class="px-3 py-1 border rounded"
+          id="cat-Ground"
+        >
+          Ground
+        </button>
+        <button
+          onclick="switchThreatCategory('Naval')"
+          class="px-3 py-1 border rounded"
+          id="cat-Naval"
+        >
+          Naval
+        </button>
+        <button
+          onclick="switchThreatCategory('Other')"
+          class="px-3 py-1 border rounded"
+          id="cat-Other"
+        >
+          Other
+        </button>
+      </div>
+
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b">
+            <th class="p-2 text-left">#</th>
+            <th class="p-2 text-left">THREAT RADAR</th>
+            <th class="p-2 text-left">THRESHOLD</th>
+            <th class="p-2 text-left">PROGRAM</th>
+          </tr>
+        </thead>
+        <tbody id="threatTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- COMM TAB -->
+    <div id="commTab" class="hidden">
+      <h2 class="text-xl font-bold mb-4">COMM Channels</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div id="comm1Section">
+          <h3 class="font-semibold mb-2">COMM1</h3>
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b">
+                <th class="p-2 text-left">Channel</th>
+                <th class="p-2 text-left">Frequency</th>
+                <th class="p-2 text-left">Modulation</th>
+                <th class="p-2 text-left">Name</th>
+              </tr>
+            </thead>
+            <tbody id="comm1Body"></tbody>
+          </table>
+        </div>
+        <div id="comm2Section">
+          <h3 class="font-semibold mb-2">COMM2</h3>
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b">
+                <th class="p-2 text-left">Channel</th>
+                <th class="p-2 text-left">Frequency</th>
+                <th class="p-2 text-left">Modulation</th>
+                <th class="p-2 text-left">Name</th>
+              </tr>
+            </thead>
+            <tbody id="comm2Body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <div class="mt-6 flex flex-wrap gap-4 items-center">
+    <div class="mt-6 flex gap-4 items-center">
       <label for="filename">Filename:</label>
       <input type="text" id="filename" value="CMDS_Custom_Config.json" />
       <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
         Download JSON
       </button>
     </div>
-
     <script>
       let jsonData = null;
+      let currentThreatCategory = "Air";
+
       const friendlyNames = {
-        AUTO_1: "Auto Program 1",
-        AUTO_2: "Auto Program 2",
-        AUTO_3: "Auto Program 3",
-        AUTO_4: "Auto Program 4",
+        AUTO_1: "Auto 1",
+        AUTO_2: "Auto 2",
+        AUTO_3: "Auto 3",
+        AUTO_4: "Auto 4",
         BYP: "Bypass",
-        MAN_1: "Manual Program 1",
-        MAN_2: "Manual Program 2",
-        MAN_3: "Manual Program 3",
-        MAN_4: "Manual Program 4",
-        MAN_5: "Manual Program 5",
-        MAN_6: "Manual Program 6",
+        MAN_1: "Manual 1",
+        MAN_2: "Manual 2",
+        MAN_3: "Manual 3",
+        MAN_4: "Manual 4",
+        MAN_5: "Manual 5",
+        MAN_6: "Manual 6",
         SEMI: "Semi-Auto",
         NONE: "None",
       };
@@ -131,53 +215,223 @@
         applyTheme();
       }
 
-      async function loadDefaultJson() {
-        try {
-          const res = await fetch("FA-18C_Lot20_DTC1_DEFAULT.json");
-          jsonData = await res.json();
-          renderConfigurator();
-        } catch {
-          alert("Failed to load default configuration.");
+      function switchTab(tabId) {
+        // Hide all tabs
+        document.getElementById("programTab").classList.add("hidden");
+        document.getElementById("threatTab").classList.add("hidden");
+        document.getElementById("commTab").classList.add("hidden");
+
+        // Reset all button styles
+        document.getElementById("tabProgramsBtn").classList.remove("bg-blue-600", "text-white");
+        document.getElementById("tabThreatsBtn").classList.remove("bg-blue-600", "text-white");
+        document.getElementById("tabCommBtn").classList.remove("bg-blue-600", "text-white");
+
+        // Activate selected tab
+        if (tabId === "programTab") {
+          document.getElementById("programTab").classList.remove("hidden");
+          document.getElementById("tabProgramsBtn").classList.add("bg-blue-600", "text-white");
+        } else if (tabId === "threatTab") {
+          document.getElementById("threatTab").classList.remove("hidden");
+          document.getElementById("tabThreatsBtn").classList.add("bg-blue-600", "text-white");
+          renderThreatTable(currentThreatCategory);
+        } else if (tabId === "commTab") {
+          document.getElementById("commTab").classList.remove("hidden");
+          document.getElementById("tabCommBtn").classList.add("bg-blue-600", "text-white");
+          renderCommTab();
         }
       }
 
-      document.getElementById("fileInput").addEventListener("change", function (e) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            jsonData = JSON.parse(event.target.result);
-            renderConfigurator();
-          } catch {
-            alert("Invalid JSON file.");
-          }
+      function switchThreatCategory(category) {
+        currentThreatCategory = category;
+        renderThreatTable(category);
+
+        ["Air", "Ground", "Naval", "Other"].forEach((cat) => {
+          document.getElementById(`cat-${cat}`).classList.remove("bg-blue-600", "text-white");
+        });
+        document.getElementById(`cat-${category}`).classList.add("bg-blue-600", "text-white");
+      }
+      function renderThreatTable(category) {
+        const tableBody = document.getElementById("threatTableBody");
+        tableBody.innerHTML = "";
+
+        const rows = jsonData.data.ALR67.CMDS.CMDS_Threat_table[category] || [];
+
+        rows.forEach((entry, index) => {
+          const tr = document.createElement("tr");
+          tr.className = "border-b";
+
+          // Row #
+          const tdIndex = document.createElement("td");
+          tdIndex.className = "p-2";
+          tdIndex.textContent = index + 1;
+          tr.appendChild(tdIndex);
+
+          // Threat Radar
+          const tdName = document.createElement("td");
+          tdName.className = "p-2";
+          tdName.textContent = entry.group_name || entry.hint || "Unknown";
+          tr.appendChild(tdName);
+
+          // Threshold (dropdown from entry.thresholds[].label)
+          const tdThresh = document.createElement("td");
+          tdThresh.className = "p-2";
+          const selThresh = document.createElement("select");
+
+          (entry.thresholds || []).forEach((th) => {
+            const option = document.createElement("option");
+            option.value = th.label;
+            option.textContent = th.label;
+            if (entry.default_threshold?.label === th.label) option.selected = true;
+            selThresh.appendChild(option);
+          });
+
+          selThresh.onchange = () => {
+            entry.default_threshold.label = selThresh.value;
+          };
+
+          tdThresh.appendChild(selThresh);
+          tr.appendChild(tdThresh);
+
+          // Program (numeric: 1 = AUTO_1, 2 = AUTO_2, etc.)
+          const tdProg = document.createElement("td");
+          tdProg.className = "p-2";
+          const selProg = document.createElement("select");
+
+          Object.entries(friendlyNames)
+            .filter(([k]) => k.startsWith("AUTO_"))
+            .forEach(([key, label]) => {
+              const num = parseInt(key.split("_")[1]);
+              const option = document.createElement("option");
+              option.value = num;
+              option.textContent = label;
+              if (entry.program === num) option.selected = true;
+              selProg.appendChild(option);
+            });
+
+          selProg.onchange = () => {
+            entry.program = parseInt(selProg.value);
+          };
+
+          tdProg.appendChild(selProg);
+          tr.appendChild(tdProg);
+
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function renderCommTab() {
+        const commRoot = jsonData?.data?.ALR67?.CMDS?.COMM;
+        if (!commRoot || !commRoot.COMM1 || !commRoot.COMM2) {
+          console.warn("COMM1 or COMM2 missing in JSON structure");
+          return;
+        }
+
+        const comm1 = commRoot.COMM1;
+        const comm2 = commRoot.COMM2;
+
+        const comm1Body = document.getElementById("comm1Body");
+        const comm2Body = document.getElementById("comm2Body");
+        comm1Body.innerHTML = "";
+        comm2Body.innerHTML = "";
+
+        const renderCommTable = (comm, tbody, commKey) => {
+          Object.entries(comm)
+            .filter(([key]) => key.startsWith("Channel_"))
+            .forEach(([chan, details]) => {
+              const tr = document.createElement("tr");
+              tr.className = "border-b";
+
+              const tdChan = document.createElement("td");
+              tdChan.className = "p-2";
+              tdChan.textContent = chan;
+              tr.appendChild(tdChan);
+
+              const tdFreq = document.createElement("td");
+              tdFreq.className = "p-2";
+              const freqInput = document.createElement("input");
+              freqInput.type = "number";
+              freqInput.step = "0.01";
+              freqInput.value = details.frequency;
+              freqInput.className = "w-24";
+              freqInput.onblur = () => {
+                const val = parseFloat(freqInput.value);
+                if (!isNaN(val)) details.frequency = val;
+                else freqInput.value = details.frequency;
+              };
+              tdFreq.appendChild(freqInput);
+              tr.appendChild(tdFreq);
+
+              const tdMod = document.createElement("td");
+              tdMod.className = "p-2";
+              const selMod = document.createElement("select");
+              ["AM", "FM"].forEach((label, idx) => {
+                const opt = new Option(label, idx);
+                if (details.modulation == idx) opt.selected = true;
+                selMod.appendChild(opt);
+              });
+              selMod.onchange = () => {
+                details.modulation = parseInt(selMod.value);
+              };
+              tdMod.appendChild(selMod);
+              tr.appendChild(tdMod);
+
+              const tdName = document.createElement("td");
+              tdName.className = "p-2";
+              const nameInput = document.createElement("input");
+              nameInput.type = "text";
+              nameInput.value = details.name || "";
+              nameInput.className = "w-24";
+              nameInput.onblur = () => {
+                details.name = nameInput.value;
+              };
+              tdName.appendChild(nameInput);
+              tr.appendChild(tdName);
+
+              tbody.appendChild(tr);
+            });
+
+          // Guard toggle
+          const trGuard = document.createElement("tr");
+          const guardVal = comm.Guard === true;
+          trGuard.innerHTML = `<td colspan="4" class="p-2 pt-4">
+      <label><input type="checkbox" id="guardToggle-${commKey}" ${
+            guardVal ? "checked" : ""
+          }/> Guard Enabled</label>
+    </td>`;
+          tbody.appendChild(trGuard);
+
+          const guardInput = trGuard.querySelector("input[type='checkbox']");
+          guardInput.onchange = () => {
+            comm.Guard = guardInput.checked;
+          };
         };
-        reader.readAsText(e.target.files[0]);
-      });
+
+        renderCommTable(comm1, comm1Body, "comm1");
+        renderCommTable(comm2, comm2Body, "comm2");
+      }
 
       function renderConfigurator() {
         const settings = jsonData.data.ALR67.CMDS.CMDSProgramSettings;
-
-        // Global delay
-        if ("delay_between_programs" in settings) {
-          const delayInput = document.getElementById("globalDelay");
-          delayInput.value = settings.delay_between_programs;
-          delayInput.oninput = () => {
-            let v = parseFloat(delayInput.value);
-            if (!isNaN(v)) {
-              v = Math.max(0, Math.min(99, Math.round(v / 0.25) * 0.25));
-              delayInput.value = v;
-              settings.delay_between_programs = v;
-            }
-          };
-        }
-
         const autoContainer = document.getElementById("autoPrograms");
         const manContainer = document.getElementById("manualPrograms");
         autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
         manContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
-
         const manualSections = [];
         let bypassSection = null;
+
+        if ("delay_between_programs" in settings) {
+          const globalDelayInput = document.getElementById("globalDelay");
+          globalDelayInput.value = settings.delay_between_programs;
+          globalDelayInput.onblur = () => {
+            let v = parseFloat(globalDelayInput.value);
+            if (!isNaN(v)) {
+              v = Math.round(v / 0.25) * 0.25;
+              v = Math.max(0, Math.min(99, v));
+              globalDelayInput.value = v;
+              settings.delay_between_programs = v;
+            }
+          };
+        }
 
         Object.entries(settings).forEach(([program, fields]) => {
           if (typeof fields !== "object" || !fields.Chaff || !fields.Flare) return;
@@ -253,13 +507,9 @@
           section.appendChild(header);
           section.appendChild(content);
 
-          if (program.startsWith("AUTO")) {
-            autoContainer.appendChild(section);
-          } else if (program === "BYP") {
-            bypassSection = section;
-          } else {
-            manualSections.push(section);
-          }
+          if (program.startsWith("AUTO")) autoContainer.appendChild(section);
+          else if (program === "BYP") bypassSection = section;
+          else manualSections.push(section);
         });
 
         manualSections.forEach((s) => manContainer.appendChild(s));
@@ -276,6 +526,31 @@
         a.click();
         URL.revokeObjectURL(url);
       }
+
+      async function loadDefaultJson() {
+        try {
+          const res = await fetch("FA-18C_Lot20_DTC1_DEFAULT.json");
+          jsonData = await res.json();
+          renderConfigurator();
+          renderCommTab(); // <- ADD THIS
+        } catch {
+          alert("Failed to load default configuration.");
+        }
+      }
+
+      document.getElementById("fileInput").addEventListener("change", function (e) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            jsonData = JSON.parse(event.target.result);
+            renderConfigurator();
+            renderCommTab(); // <- ADD THIS
+          } catch {
+            alert("Invalid JSON file.");
+          }
+        };
+        reader.readAsText(e.target.files[0]);
+      });
 
       applyTheme();
       loadDefaultJson();
