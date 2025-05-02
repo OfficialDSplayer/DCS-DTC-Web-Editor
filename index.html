@@ -320,7 +320,7 @@
       }
 
       function renderCommTab() {
-        const commRoot = jsonData?.data?.ALR67?.CMDS?.COMM;
+        const commRoot = jsonData?.data?.COMM;
         if (!commRoot || !commRoot.COMM1 || !commRoot.COMM2) {
           console.warn("COMM1 or COMM2 missing in JSON structure");
           return;
@@ -337,13 +337,22 @@
         const renderCommTable = (comm, tbody, commKey) => {
           Object.entries(comm)
             .filter(([key]) => key.startsWith("Channel_"))
+            .sort((a, b) => {
+              const getSortKey = (k) => {
+                const num = k[0].match(/^Channel_(\d+)$/);
+                return num ? parseInt(num[1]) : k[0]; // If not a number, keep original key (like C, G, M)
+              };
+              const aKey = getSortKey(a);
+              const bKey = getSortKey(b);
+              return aKey > bKey ? 1 : aKey < bKey ? -1 : 0;
+            })
             .forEach(([chan, details]) => {
               const tr = document.createElement("tr");
               tr.className = "border-b";
 
               const tdChan = document.createElement("td");
               tdChan.className = "p-2";
-              tdChan.textContent = chan;
+              tdChan.textContent = chan.replace("Channel_", "Channel ");
               tr.appendChild(tdChan);
 
               const tdFreq = document.createElement("td");
@@ -518,11 +527,22 @@
 
       function downloadJson() {
         const fileName = document.getElementById("filename").value;
-        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+
+        // Ensure required fields are present
+        if (!jsonData.data) jsonData.data = {};
+        jsonData.data.name = "";
+        jsonData.data.type = "FA-18C_hornet";
+        jsonData.name = fileName.replace(/\.json$/, "");
+        jsonData.type = "FA-18C_hornet";
+
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+          type: "application/json",
+        });
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = fileName;
+        a.download = fileName.endsWith(".DTC") ? fileName : `${fileName}.DTC`;
         a.click();
         URL.revokeObjectURL(url);
       }
