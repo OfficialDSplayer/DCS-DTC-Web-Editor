@@ -52,29 +52,33 @@
   </head>
   <body class="p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">CMDS Editor</h1>
+      <h1 class="text-2xl font-bold">DCS DTC Web Editor</h1>
       <button onclick="toggleDarkMode()" id="themeToggle" class="px-4 py-2 border rounded">
         Toggle Dark Mode
       </button>
     </div>
 
-    <div class="mb-4 flex gap-4">
-      <button
-        onclick="switchTab('programTab')"
-        id="tabProgramsBtn"
-        class="px-4 py-2 border rounded bg-blue-600 text-white"
-      >
-        CMDS Programs
-      </button>
-      <button onclick="switchTab('threatTab')" id="tabThreatsBtn" class="px-4 py-2 border rounded">
-        Threat Table
-      </button>
-      <button onclick="switchTab('commTab')" id="tabCommBtn" class="px-4 py-2 border rounded">
-        COMM
-      </button>
+    <div class="mb-6">
+      <p class="mb-2 text-sm">An online DTC Web Editor for DCS</p>
+      <p class="mb-2 text-sm">By DSplayer</p>
+      <!-- <input type="file" id="fileInput" accept="application/json" class="mb-4" /> -->
     </div>
 
-    <input type="file" id="fileInput" accept="application/json" class="mb-4" />
+    <div class="mb-4 flex gap-4">
+      <label for="aircraftSelect" class="font-semibold">Select Aircraft:</label>
+      <select id="aircraftSelect" class="border p-1 rounded">
+        <option value="FA-18C_hornet">F/A-18C Hornet</option>
+        <option value="F-16C_50">F-16C Block 50</option>
+        <!-- Add more aircraft as needed -->
+      </select>
+    </div>
+
+    <div id="tabButtons" class="mb-4 flex gap-4"></div>
+
+    <div class="mb-6">
+      <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
+      <input type="file" id="fileInput" accept="application/DTC" class="mb-4" />
+    </div>
 
     <!-- PROGRAM SETTINGS TAB -->
     <div id="programTab">
@@ -94,7 +98,14 @@
     </div>
     <!-- THREAT TABLE TAB -->
     <div id="threatTab" class="hidden">
-      <h2 class="text-xl font-bold mb-4">CMDS Threat Table</h2>
+      <h2 class="text-xl font-bold mb-2">CMDS Threat Table</h2>
+
+      <input
+        type="text"
+        id="threatSearch"
+        placeholder="Search threats..."
+        class="mb-2 px-2 py-1 border rounded w-full max-w-md"
+      />
 
       <div class="mb-4 flex gap-2">
         <button onclick="switchThreatCategory('Air')" class="px-3 py-1 border rounded" id="cat-Air">
@@ -173,14 +184,78 @@
 
     <div class="mt-6 flex gap-4 items-center">
       <label for="filename">Filename:</label>
-      <input type="text" id="filename" value="CMDS_Custom_Config.json" />
+      <input type="text" id="filename" value="DTC_Custom.DTC" />
       <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
-        Download JSON
+        Download DTC
       </button>
     </div>
     <script>
+      function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
       let jsonData = null;
       let currentThreatCategory = "Air";
+      let currentAircraftType = "FA-18C_hornet";
+      let currentTabId = "programTab"; // Track active tab globally
+
+      const aircraftCapabilities = {
+        "FA-18C_hornet": {
+          hasPrograms: true,
+          hasThreatTable: true,
+          hasComm: true,
+        },
+        "F-16C_50": {
+          hasPrograms: true,
+          hasThreatTable: true,
+          hasComm: true,
+        },
+        // Add more aircraft as needed
+      };
+
+      const dtcPaths = {
+        "FA-18C_hornet": {
+          programSettings: () => jsonData?.data?.ALR67?.CMDS?.CMDSProgramSettings,
+          threatTable: () => jsonData?.data?.ALR67?.CMDS?.CMDS_Threat_table,
+          delayBetweenPrograms: () => jsonData?.data?.ALR67?.CMDS?.delay_between_programs,
+        },
+        "F-16C_50": {
+          programSettings: () => jsonData?.data?.MPD?.CMDS?.CMDSProgramSettings,
+          threatTable: () => jsonData?.data?.MPD?.CMDS?.CMDSPrograms,
+          delayBetweenPrograms: () => jsonData?.data?.MPD?.CMDS?.delayBetweenPrograms,
+        },
+      };
+
+      function updateTabVisibilityForAircraft(type) {
+        const caps = aircraftCapabilities[type] || {};
+
+        renderTabButtons(); // Recreate buttons for the selected aircraft
+
+        toggleElement("programTab", caps.hasPrograms);
+        toggleElement("threatTab", caps.hasThreatTable);
+        toggleElement("commTab", caps.hasComm);
+
+        // Only switch tab if current one is no longer valid
+        const validTab = caps[`has${capitalize(currentTabId.replace("Tab", ""))}`] ?? false;
+
+        if (!validTab) {
+          if (caps.hasPrograms) currentTabId = "programTab";
+          else if (caps.hasThreatTable) currentTabId = "threatTab";
+          else if (caps.hasComm) currentTabId = "commTab";
+        }
+
+        switchTab(currentTabId);
+      }
+
+      function toggleElement(id, show) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (show) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      }
 
       const friendlyNames = {
         AUTO_1: "Auto 1",
@@ -215,30 +290,75 @@
         applyTheme();
       }
 
+      function renderTabButtons() {
+        const container = document.getElementById("tabButtons");
+        container.innerHTML = "";
+
+        const caps = aircraftCapabilities[currentAircraftType];
+
+        const tabs = [
+          {
+            id: "programTab",
+            label: "Countermeasure Programs",
+            capability: "hasPrograms",
+            btnId: "tabProgramsBtn",
+          },
+          {
+            id: "threatTab",
+            label: "Threat Table",
+            capability: "hasThreatTable",
+            btnId: "tabThreatsBtn",
+          },
+          {
+            id: "commTab",
+            label: "Communications",
+            capability: "hasComm",
+            btnId: "tabCommBtn",
+          },
+        ];
+
+        tabs.forEach(({ id, label, capability, btnId }) => {
+          if (!caps[capability]) return;
+          const btn = document.createElement("button");
+          btn.id = btnId;
+          btn.textContent = label;
+          btn.className = "px-4 py-2 border rounded";
+          btn.onclick = () => switchTab(id);
+          container.appendChild(btn);
+        });
+
+        // Restore correct tab button highlighting after re-render
+        // switchTab(currentTabId);
+      }
+
       function switchTab(tabId) {
-        // Hide all tabs
-        document.getElementById("programTab").classList.add("hidden");
-        document.getElementById("threatTab").classList.add("hidden");
-        document.getElementById("commTab").classList.add("hidden");
+        const allTabs = ["programTab", "threatTab", "commTab"];
+        allTabs.forEach((t) => document.getElementById(t)?.classList.add("hidden"));
 
-        // Reset all button styles
-        document.getElementById("tabProgramsBtn").classList.remove("bg-blue-600", "text-white");
-        document.getElementById("tabThreatsBtn").classList.remove("bg-blue-600", "text-white");
-        document.getElementById("tabCommBtn").classList.remove("bg-blue-600", "text-white");
+        const allButtons = ["tabProgramsBtn", "tabThreatsBtn", "tabCommBtn"];
+        allButtons.forEach((b) =>
+          document.getElementById(b)?.classList.remove("bg-blue-600", "text-white")
+        );
 
-        // Activate selected tab
-        if (tabId === "programTab") {
-          document.getElementById("programTab").classList.remove("hidden");
-          document.getElementById("tabProgramsBtn").classList.add("bg-blue-600", "text-white");
-        } else if (tabId === "threatTab") {
-          document.getElementById("threatTab").classList.remove("hidden");
-          document.getElementById("tabThreatsBtn").classList.add("bg-blue-600", "text-white");
-          renderThreatTable(currentThreatCategory);
+        const tabElement = document.getElementById(tabId);
+        const buttonElement = {
+          programTab: "tabProgramsBtn",
+          threatTab: "tabThreatsBtn",
+          commTab: "tabCommBtn",
+        }[tabId];
+
+        if (!tabElement || !document.getElementById(buttonElement)) return;
+
+        tabElement.classList.remove("hidden");
+        document.getElementById(buttonElement).classList.add("bg-blue-600", "text-white");
+
+        if (tabId === "threatTab") {
+          currentThreatCategory = "Air";
+          switchThreatCategory("Air");
         } else if (tabId === "commTab") {
-          document.getElementById("commTab").classList.remove("hidden");
-          document.getElementById("tabCommBtn").classList.add("bg-blue-600", "text-white");
           renderCommTab();
         }
+        currentTabId = tabId; // Track tab on each switch
       }
 
       function switchThreatCategory(category) {
@@ -254,9 +374,16 @@
         const tableBody = document.getElementById("threatTableBody");
         tableBody.innerHTML = "";
 
-        const rows = jsonData.data.ALR67.CMDS.CMDS_Threat_table[category] || [];
+        const rows = dtcPaths[currentAircraftType]?.threatTable?.()[category] || [];
 
-        rows.forEach((entry, index) => {
+        const searchQuery = document.getElementById("threatSearch")?.value?.toLowerCase() || "";
+        const filteredRows = rows.filter((entry) => {
+          const name = entry.group_name?.toLowerCase() || "";
+          const hint = entry.hint?.toLowerCase() || "";
+          return name.includes(searchQuery) || hint.includes(searchQuery);
+        });
+
+        filteredRows.forEach((entry, index) => {
           const tr = document.createElement("tr");
           tr.className = "border-b";
 
@@ -270,6 +397,9 @@
           const tdName = document.createElement("td");
           tdName.className = "p-2";
           tdName.textContent = entry.group_name || entry.hint || "Unknown";
+          if (entry.hint) {
+            tdName.title = entry.hint.replace(/\n/g, ", ");
+          }
           tr.appendChild(tdName);
 
           // Threshold (dropdown from entry.thresholds[].label)
@@ -339,12 +469,10 @@
             .filter(([key]) => key.startsWith("Channel_"))
             .sort((a, b) => {
               const getSortKey = (k) => {
-                const num = k[0].match(/^Channel_(\d+)$/);
-                return num ? parseInt(num[1]) : k[0]; // If not a number, keep original key (like C, G, M)
+                const match = k.match(/^Channel_(\d+)$/);
+                return match ? parseInt(match[1]) : k;
               };
-              const aKey = getSortKey(a);
-              const bKey = getSortKey(b);
-              return aKey > bKey ? 1 : aKey < bKey ? -1 : 0;
+              return getSortKey(a[0]) - getSortKey(b[0]);
             })
             .forEach(([chan, details]) => {
               const tr = document.createElement("tr");
@@ -360,12 +488,16 @@
               const freqInput = document.createElement("input");
               freqInput.type = "number";
               freqInput.step = "0.01";
-              freqInput.value = details.frequency;
+              freqInput.value = details.frequency ?? details.freq ?? "";
               freqInput.className = "w-24";
               freqInput.onblur = () => {
                 const val = parseFloat(freqInput.value);
-                if (!isNaN(val)) details.frequency = val;
-                else freqInput.value = details.frequency;
+                if (!isNaN(val)) {
+                  if ("frequency" in details) details.frequency = val;
+                  else if ("freq" in details) details.freq = val;
+                } else {
+                  freqInput.value = details.frequency ?? details.freq ?? "";
+                }
               };
               tdFreq.appendChild(freqInput);
               tr.appendChild(tdFreq);
@@ -388,31 +520,35 @@
               tdName.className = "p-2";
               const nameInput = document.createElement("input");
               nameInput.type = "text";
-              nameInput.value = details.name || "";
+              nameInput.value = details.name ?? `CH ${chan.replace("Channel_", "")}`;
               nameInput.className = "w-24";
               nameInput.onblur = () => {
-                details.name = nameInput.value;
+                if ("name" in details || currentAircraftType === "FA-18C_hornet") {
+                  details.name = nameInput.value;
+                }
               };
+
               tdName.appendChild(nameInput);
               tr.appendChild(tdName);
 
               tbody.appendChild(tr);
             });
 
-          // Guard toggle
-          const trGuard = document.createElement("tr");
-          const guardVal = comm.Guard === true;
-          trGuard.innerHTML = `<td colspan="4" class="p-2 pt-4">
-      <label><input type="checkbox" id="guardToggle-${commKey}" ${
-            guardVal ? "checked" : ""
-          }/> Guard Enabled</label>
-    </td>`;
-          tbody.appendChild(trGuard);
+          // Guard checkbox (only present in Hornet files)
+          if ("Guard" in comm && currentAircraftType === "FA-18C_hornet") {
+            const trGuard = document.createElement("tr");
+            trGuard.innerHTML = `<td colspan="4" class="p-2 pt-4">
+        <label><input type="checkbox" id="guardToggle-${commKey}" ${
+              comm.Guard ? "checked" : ""
+            }/> Guard Enabled</label>
+      </td>`;
+            tbody.appendChild(trGuard);
 
-          const guardInput = trGuard.querySelector("input[type='checkbox']");
-          guardInput.onchange = () => {
-            comm.Guard = guardInput.checked;
-          };
+            const guardInput = trGuard.querySelector("input[type='checkbox']");
+            guardInput.onchange = () => {
+              comm.Guard = guardInput.checked;
+            };
+          }
         };
 
         renderCommTable(comm1, comm1Body, "comm1");
@@ -420,7 +556,8 @@
       }
 
       function renderConfigurator() {
-        const settings = jsonData.data.ALR67.CMDS.CMDSProgramSettings;
+        const settings = dtcPaths[currentAircraftType]?.programSettings?.();
+        if (!settings) return;
         const autoContainer = document.getElementById("autoPrograms");
         const manContainer = document.getElementById("manualPrograms");
         autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
@@ -428,16 +565,21 @@
         const manualSections = [];
         let bypassSection = null;
 
-        if ("delay_between_programs" in settings) {
+        const delay = dtcPaths[currentAircraftType]?.delayBetweenPrograms?.();
+        if (typeof delay === "number") {
           const globalDelayInput = document.getElementById("globalDelay");
-          globalDelayInput.value = settings.delay_between_programs;
+          globalDelayInput.value = delay;
           globalDelayInput.onblur = () => {
             let v = parseFloat(globalDelayInput.value);
             if (!isNaN(v)) {
               v = Math.round(v / 0.25) * 0.25;
               v = Math.max(0, Math.min(99, v));
               globalDelayInput.value = v;
-              settings.delay_between_programs = v;
+
+              if (currentAircraftType === "FA-18C_hornet")
+                jsonData.data.ALR67.CMDS.delay_between_programs = v;
+              else if (currentAircraftType === "F-16C_50")
+                jsonData.data.MPD.CMDS.delayBetweenPrograms = v;
             }
           };
         }
@@ -528,12 +670,12 @@
       function downloadJson() {
         const fileName = document.getElementById("filename").value;
 
-        // Ensure required fields are present
         if (!jsonData.data) jsonData.data = {};
         jsonData.data.name = "";
-        jsonData.data.type = "FA-18C_hornet";
+        jsonData.data.type = currentAircraft;
+
         jsonData.name = fileName.replace(/\.json$/, "");
-        jsonData.type = "FA-18C_hornet";
+        jsonData.type = currentAircraft;
 
         const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
           type: "application/json",
@@ -563,15 +705,64 @@
         reader.onload = (event) => {
           try {
             jsonData = JSON.parse(event.target.result);
+
+            // Automatically switch aircraft
+            const detectedType = jsonData?.type || jsonData?.data?.type;
+            if (detectedType && aircraftCapabilities[detectedType]) {
+              currentAircraftType = detectedType;
+              document.getElementById("aircraftSelect").value = detectedType;
+              updateTabVisibilityForAircraft(detectedType);
+            }
+
+            if (jsonData?.data?.COMM) {
+              ["COMM1", "COMM2"].forEach((commKey) => {
+                const comm = jsonData.data.COMM[commKey];
+                if (comm) {
+                  Object.entries(comm).forEach(([chan, details]) => {
+                    if (chan.startsWith("Channel_") && !("name" in details)) {
+                      details.name = `CH ${chan.replace("Channel_", "")}`;
+                    }
+                  });
+                }
+              });
+            }
+
+            renderTabButtons(); // Refresh tabs
             renderConfigurator();
-            renderCommTab(); // <- ADD THIS
+            renderCommTab();
           } catch {
-            alert("Invalid JSON file.");
+            alert("Invalid DTC file.");
           }
         };
         reader.readAsText(e.target.files[0]);
       });
 
+      document.getElementById("threatSearch").addEventListener("input", () => {
+        renderThreatTable(currentThreatCategory);
+      });
+
+      document.getElementById("aircraftSelect").addEventListener("change", (e) => {
+        const selected = e.target.value;
+        currentAircraftType = selected;
+
+        updateTabVisibilityForAircraft(selected);
+
+        // After rendering buttons, re-activate the same tab if supported by aircraft
+        const caps = aircraftCapabilities[selected];
+        const fallbackTab = caps.hasPrograms
+          ? "programTab"
+          : caps.hasThreatTable
+          ? "threatTab"
+          : "commTab";
+
+        const tabToShow = caps[`has${capitalize(currentTabId.replace("Tab", ""))}`]
+          ? currentTabId
+          : fallbackTab;
+
+        switchTab(tabToShow);
+      });
+
+      updateTabVisibilityForAircraft(currentAircraftType);
       applyTheme();
       loadDefaultJson();
     </script>
