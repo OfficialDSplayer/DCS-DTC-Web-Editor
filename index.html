@@ -41,19 +41,19 @@
       .section-header {
         cursor: pointer;
         font-weight: bold;
-        padding: 6px 0;
-        font-size: 1.1rem;
-      }
-      .program-section {
-        border-top: 1px solid var(--input-border);
-        margin-top: 1rem;
-        padding-top: 0.5rem;
+        font-size: 1.05rem;
+        margin-bottom: 6px;
       }
       .collapsed {
         display: none;
       }
       label {
         font-size: 0.85rem;
+      }
+      .program-section {
+        border-top: 1px solid var(--input-border);
+        margin-bottom: 1.25rem;
+        padding-top: 0.75rem;
       }
     </style>
   </head>
@@ -73,13 +73,20 @@
       <input type="file" id="fileInput" accept="application/json" class="mt-2" />
     </div>
 
-    <div id="delay-container" class="mb-6">
+    <div class="mb-8">
       <h2 class="font-semibold mb-2">Global AUTO Delay Between Programs</h2>
       <label for="globalDelay">Delay (sec):</label>
       <input type="number" id="globalDelay" step="0.25" min="0" max="99" />
     </div>
 
-    <div id="configurator"></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div id="autoPrograms">
+        <h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>
+      </div>
+      <div id="manualPrograms">
+        <h2 class="text-lg font-semibold mb-2">Manual Programs</h2>
+      </div>
+    </div>
 
     <div class="mt-6 flex flex-wrap gap-4 items-center">
       <label for="filename">Filename:</label>
@@ -101,6 +108,8 @@
         MAN_2: "Manual Program 2",
         MAN_3: "Manual Program 3",
         MAN_4: "Manual Program 4",
+        MAN_5: "Manual Program 5",
+        MAN_6: "Manual Program 6",
         SEMI: "Semi-Auto",
         NONE: "None",
       };
@@ -146,8 +155,6 @@
       });
 
       function renderConfigurator() {
-        const container = document.getElementById("configurator");
-        container.innerHTML = "";
         const settings = jsonData.data.ALR67.CMDS.CMDSProgramSettings;
 
         // Global delay
@@ -163,6 +170,14 @@
             }
           };
         }
+
+        const autoContainer = document.getElementById("autoPrograms");
+        const manContainer = document.getElementById("manualPrograms");
+        autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
+        manContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
+
+        const manualSections = [];
+        let bypassSection = null;
 
         Object.entries(settings).forEach(([program, fields]) => {
           if (typeof fields !== "object" || !fields.Chaff || !fields.Flare) return;
@@ -216,12 +231,15 @@
               input.max = max;
               input.value = fields[type][param];
 
-              input.oninput = () => {
+              input.onblur = () => {
                 let v = parseFloat(input.value);
                 if (!isNaN(v)) {
-                  v = Math.max(min, Math.min(max, Math.round(v / step) * step));
+                  v = Math.round(v / step) * step;
+                  v = Math.max(min, Math.min(max, v));
                   input.value = v;
                   fields[type][param] = v;
+                } else {
+                  input.value = fields[type][param];
                 }
               };
 
@@ -234,8 +252,18 @@
 
           section.appendChild(header);
           section.appendChild(content);
-          container.appendChild(section);
+
+          if (program.startsWith("AUTO")) {
+            autoContainer.appendChild(section);
+          } else if (program === "BYP") {
+            bypassSection = section;
+          } else {
+            manualSections.push(section);
+          }
         });
+
+        manualSections.forEach((s) => manContainer.appendChild(s));
+        if (bypassSection) manContainer.appendChild(bypassSection);
       }
 
       function downloadJson() {
