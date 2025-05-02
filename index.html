@@ -12,80 +12,79 @@
       :root {
         --bg-color: #f5f5f5;
         --text-color: #000;
-        --card-bg: #ffffff;
-        --card-text: #000;
-        --highlight: #444;
+        --input-bg: #fff;
+        --input-border: #ccc;
+        --highlight: #555;
       }
-
       [data-theme="dark"] {
-        --bg-color: #111;
+        --bg-color: #121212;
         --text-color: #f0f0f0;
-        --card-bg: #1e1e1e;
-        --card-text: #f0f0f0;
-        --highlight: #888;
+        --input-bg: #1e1e1e;
+        --input-border: #444;
+        --highlight: #aaa;
       }
-
       body {
-        font-family: Arial, sans-serif;
         background-color: var(--bg-color);
         color: var(--text-color);
+        font-family: Arial, sans-serif;
         transition: background-color 0.3s, color 0.3s;
       }
-
-      .card {
-        background-color: var(--card-bg);
-        color: var(--card-text);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s, color 0.3s;
-      }
-
       input[type="number"],
       input[type="text"] {
-        background-color: var(--card-bg);
-        color: var(--card-text);
-        border: 1px solid var(--highlight);
-        padding: 6px 10px;
-        border-radius: 6px;
-        width: 70px;
-        transition: background-color 0.3s, color 0.3s, border 0.3s;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--input-border);
+        padding: 5px;
+        border-radius: 4px;
+        width: 80px;
       }
-
+      .section-header {
+        cursor: pointer;
+        font-weight: bold;
+        padding: 6px 0;
+        font-size: 1.1rem;
+      }
+      .program-section {
+        border-top: 1px solid var(--input-border);
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+      }
+      .collapsed {
+        display: none;
+      }
       label {
         font-size: 0.85rem;
-        margin-bottom: 4px;
-      }
-
-      .title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 10px;
       }
     </style>
   </head>
   <body class="p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="title">CMDS Program Configurator</h1>
-      <button onclick="toggleDarkMode()" id="themeToggle" class="px-4 py-2 rounded border">
+      <h1 class="text-2xl font-bold">CMDS Program Editor</h1>
+      <button onclick="toggleDarkMode()" id="themeToggle" class="px-4 py-2 border rounded">
         Toggle Dark Mode
       </button>
     </div>
 
-    <div class="mb-6 space-y-2">
+    <div class="mb-4">
       <p class="text-sm">
         By default, the editor loads data from the default configuration file in the repository.
       </p>
       <p class="text-sm">Optionally, you may upload your own JSON file to edit instead.</p>
-      <input type="file" id="fileInput" accept="application/json" class="block mt-2" />
+      <input type="file" id="fileInput" accept="application/json" class="mt-2" />
     </div>
 
-    <div id="configurator" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"></div>
+    <div id="delay-container" class="mb-6">
+      <h2 class="font-semibold mb-2">Global AUTO Delay Between Programs</h2>
+      <label for="globalDelay">Delay (sec):</label>
+      <input type="number" id="globalDelay" step="0.25" min="0" max="99" />
+    </div>
 
-    <div class="mt-6 flex flex-wrap items-center gap-4">
-      <label for="filename" class="text-sm">Filename:</label>
+    <div id="configurator"></div>
+
+    <div class="mt-6 flex flex-wrap gap-4 items-center">
+      <label for="filename">Filename:</label>
       <input type="text" id="filename" value="CMDS_Custom_Config.json" />
-      <button onclick="downloadJson()" class="px-4 py-2 rounded bg-blue-600 text-white">
+      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
         Download JSON
       </button>
     </div>
@@ -151,58 +150,40 @@
         container.innerHTML = "";
         const settings = jsonData.data.ALR67.CMDS.CMDSProgramSettings;
 
-        // Render global delay_between_programs
+        // Global delay
         if ("delay_between_programs" in settings) {
-          const delayCard = document.createElement("div");
-          delayCard.className = "card";
-
-          const title = document.createElement("h2");
-          title.textContent = "Global Delay Between AUTO Programs";
-          title.className = "font-semibold mb-3 text-lg";
-          delayCard.appendChild(title);
-
-          const wrapper = document.createElement("div");
-          wrapper.className = "flex items-center gap-4";
-
-          const label = document.createElement("label");
-          label.textContent = "Delay (sec)";
-          wrapper.appendChild(label);
-
-          const input = document.createElement("input");
-          input.type = "number";
-          input.step = 0.25;
-          input.min = 0;
-          input.max = 99;
-          input.value = settings.delay_between_programs;
-
-          input.oninput = () => {
-            let v = parseFloat(input.value);
+          const delayInput = document.getElementById("globalDelay");
+          delayInput.value = settings.delay_between_programs;
+          delayInput.oninput = () => {
+            let v = parseFloat(delayInput.value);
             if (!isNaN(v)) {
               v = Math.max(0, Math.min(99, Math.round(v / 0.25) * 0.25));
-              input.value = v;
+              delayInput.value = v;
               settings.delay_between_programs = v;
             }
           };
-
-          wrapper.appendChild(input);
-          delayCard.appendChild(wrapper);
-          container.appendChild(delayCard);
         }
 
         Object.entries(settings).forEach(([program, fields]) => {
           if (typeof fields !== "object" || !fields.Chaff || !fields.Flare) return;
 
-          const card = document.createElement("div");
-          card.className = "card";
+          const section = document.createElement("div");
+          section.className = "program-section";
 
-          const title = document.createElement("h2");
-          title.textContent = friendlyNames[program] || program;
-          title.className = "font-semibold mb-3 text-lg";
-          card.appendChild(title);
+          const header = document.createElement("div");
+          header.className = "section-header";
+          header.textContent = friendlyNames[program] || program;
+
+          const content = document.createElement("div");
+          content.className = "space-y-2 mt-2";
+
+          header.addEventListener("click", () => {
+            content.classList.toggle("collapsed");
+          });
 
           ["Quantity", "Repeat", "Interval"].forEach((param) => {
             const row = document.createElement("div");
-            row.className = "flex flex-wrap items-end gap-6 mb-2";
+            row.className = "flex gap-4 items-end";
 
             ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
               if (!fields[type] || fields[type][param] === undefined) return;
@@ -211,7 +192,7 @@
               col.className = "flex flex-col";
 
               const label = document.createElement("label");
-              label.textContent = param === "Quantity" ? `${type} Quantity` : param;
+              label.textContent = param === "Quantity" ? `${type} Qty` : param;
               col.appendChild(label);
 
               const input = document.createElement("input");
@@ -248,10 +229,12 @@
               row.appendChild(col);
             });
 
-            if (row.children.length > 0) card.appendChild(row);
+            if (row.children.length > 0) content.appendChild(row);
           });
 
-          container.appendChild(card);
+          section.appendChild(header);
+          section.appendChild(content);
+          container.appendChild(section);
         });
       }
 
