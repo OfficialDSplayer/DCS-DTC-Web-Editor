@@ -616,165 +616,112 @@
         const settings = dtcPaths[currentAircraftType]?.programSettings?.();
         if (!settings) return;
 
-        const bingoContainer = document.getElementById("bingoSettingsContainer");
-        const bingoFields = document.getElementById("bingoSettingsFields");
-        bingoContainer.classList.add("hidden"); // hide by default
-
-        if (currentAircraftType === "F-16C_50") {
-          const bingoData = dtcPaths["F-16C_50"]?.bingoSettings?.();
-          if (bingoData) {
-            bingoContainer.classList.remove("hidden");
-            bingoFields.innerHTML = "";
-
-            const bingoMap = {
-              BINGO: "Bingo Enabled",
-              FDBK: "Feedback",
-              REQCTR: "Require Counter",
-              ChaffNum: "Chaff Qty",
-              FlaresNum: "Flare Qty",
-              Other1Num: "Other1 Qty",
-              Other2Num: "Other2 Qty",
-            };
-
-            Object.entries(bingoMap).forEach(([key, label]) => {
-              const wrapper = document.createElement("div");
-
-              if (typeof bingoData[key] === "boolean") {
-                wrapper.innerHTML = `
-          <label class="flex items-center gap-2">
-            <input type="checkbox" ${bingoData[key] ? "checked" : ""}>
-            <span>${label}</span>
-          </label>
-        `;
-                const checkbox = wrapper.querySelector("input");
-                checkbox.onchange = () => {
-                  bingoData[key] = checkbox.checked;
-                };
-              } else {
-                const input = document.createElement("input");
-                input.type = "number";
-                input.value = bingoData[key];
-                input.className = "w-20";
-                input.onchange = () => {
-                  bingoData[key] = parseInt(input.value);
-                };
-
-                const labelEl = document.createElement("label");
-                labelEl.textContent = label;
-                labelEl.className = "block text-sm";
-
-                wrapper.appendChild(labelEl);
-                wrapper.appendChild(input);
-              }
-
-              bingoFields.appendChild(wrapper);
-            });
-          }
-        }
-
         const isF16 = currentAircraftType === "F-16C_50";
         const autoContainer = document.getElementById("autoPrograms");
         const manContainer = document.getElementById("manualPrograms");
-        autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
-        manContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
-        const manualSections = [];
-        let bypassSection = null;
 
-        const delay = dtcPaths[currentAircraftType]?.delayBetweenPrograms?.();
-        if (typeof delay === "number") {
-          const globalDelayInput = document.getElementById("globalDelay");
-          globalDelayInput.value = delay;
-          globalDelayInput.onblur = () => {
-            let v = parseFloat(globalDelayInput.value);
+        autoContainer.innerHTML = "";
+        manContainer.innerHTML = "";
+
+        // Top row: Delay + Bingo Settings (aligned)
+        const topRow = document.createElement("div");
+        topRow.className = "grid grid-cols-1 md:grid-cols-2 gap-6 mb-6";
+
+        // --- Global Delay ---
+        const delayBox = document.createElement("div");
+        delayBox.innerHTML = `
+    <label class="block font-medium mb-1">Global AUTO Delay Between Programs (sec):</label>
+    <input type="number" id="globalDelay" step="0.25" min="0" max="99" class="w-32" />
+  `;
+        const delayInput = delayBox.querySelector("input");
+        const delayVal = dtcPaths[currentAircraftType]?.delayBetweenPrograms?.();
+        if (typeof delayVal === "number") {
+          delayInput.value = delayVal;
+          delayInput.onblur = () => {
+            let v = parseFloat(delayInput.value);
             if (!isNaN(v)) {
               v = Math.round(v / 0.25) * 0.25;
               v = Math.max(0, Math.min(99, v));
-              globalDelayInput.value = v;
-
+              delayInput.value = v;
               if (currentAircraftType === "FA-18C_hornet")
                 jsonData.data.ALR67.CMDS.delay_between_programs = v;
-              else if (currentAircraftType === "F-16C_50")
-                jsonData.data.MPD.CMDS.delayBetweenPrograms = v;
+              else if (isF16) jsonData.data.MPD.CMDS.delayBetweenPrograms = v;
             }
           };
         }
+        topRow.appendChild(delayBox);
 
-        if (currentAircraftType === "F-16C_50") {
+        // --- Bingo Settings (F-16 only) ---
+        if (isF16) {
           const bingo = dtcPaths["F-16C_50"]?.bingoSettings?.();
           if (bingo) {
-            const bingoContainer = document.createElement("div");
-            bingoContainer.className = "mb-6";
+            const bingoBox = document.createElement("div");
 
             const title = document.createElement("h3");
             title.className = "text-lg font-semibold mb-2";
             title.textContent = "Bingo Settings";
-            bingoContainer.appendChild(title);
+            bingoBox.appendChild(title);
 
-            const fields = [
-              { label: "Chaff", key: "ChaffNum", min: 0, max: 99 },
-              { label: "Flare", key: "FlaresNum", min: 0, max: 99 },
-              { label: "Other1", key: "Other1Num", min: 0, max: 99 },
-              { label: "Other2", key: "Other2Num", min: 0, max: 99 },
-            ];
+            const fieldRow = document.createElement("div");
+            fieldRow.className = "flex gap-4 flex-wrap mb-4";
 
-            const checkboxFields = [
+            [
+              { label: "Chaff", key: "ChaffNum" },
+              { label: "Flare", key: "FlaresNum" },
+              { label: "Other1", key: "Other1Num" },
+              { label: "Other2", key: "Other2Num" },
+            ].forEach(({ label, key }) => {
+              const col = document.createElement("div");
+              col.className = "flex flex-col";
+              const lbl = document.createElement("label");
+              lbl.textContent = `${label} Qty`;
+              const input = document.createElement("input");
+              input.type = "number";
+              input.className = "w-20";
+              input.value = bingo[key];
+              input.onblur = () => {
+                const val = parseInt(input.value);
+                if (!isNaN(val)) bingo[key] = Math.max(0, Math.min(99, val));
+                else input.value = bingo[key];
+              };
+              col.appendChild(lbl);
+              col.appendChild(input);
+              fieldRow.appendChild(col);
+            });
+
+            bingoBox.appendChild(fieldRow);
+
+            [
               { label: "BINGO Warning", key: "BINGO" },
               { label: "Feedback (FDBK)", key: "FDBK" },
               { label: "Request Counter (REQCTR)", key: "REQCTR" },
-            ];
-
-            const row = document.createElement("div");
-            row.className = "flex gap-4 mb-4 flex-wrap";
-
-            fields.forEach(({ label, key, min, max }) => {
-              const col = document.createElement("div");
-              col.className = "flex flex-col";
-
-              const lbl = document.createElement("label");
-              lbl.textContent = `${label} Qty`;
-              col.appendChild(lbl);
-
-              const input = document.createElement("input");
-              input.type = "number";
-              input.value = bingo[key];
-              input.min = min;
-              input.max = max;
-              input.className = "w-20";
-              input.onblur = () => {
-                const val = parseInt(input.value);
-                if (!isNaN(val)) bingo[key] = Math.max(min, Math.min(max, val));
-                else input.value = bingo[key];
-              };
-              col.appendChild(input);
-              row.appendChild(col);
-            });
-
-            bingoContainer.appendChild(row);
-
-            checkboxFields.forEach(({ label, key }) => {
-              const checkboxDiv = document.createElement("div");
-              checkboxDiv.className = "mb-2";
-
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.checked = bingo[key];
-              checkbox.onchange = () => {
-                bingo[key] = checkbox.checked;
-              };
-
+            ].forEach(({ label, key }) => {
+              const cbDiv = document.createElement("div");
+              cbDiv.className = "mb-2";
+              const cb = document.createElement("input");
+              cb.type = "checkbox";
+              cb.checked = bingo[key];
+              cb.onchange = () => (bingo[key] = cb.checked);
               const lbl = document.createElement("label");
               lbl.className = "ml-2";
               lbl.textContent = label;
-
-              checkboxDiv.appendChild(checkbox);
-              checkboxDiv.appendChild(lbl);
-              bingoContainer.appendChild(checkboxDiv);
+              cbDiv.appendChild(cb);
+              cbDiv.appendChild(lbl);
+              bingoBox.appendChild(cbDiv);
             });
 
-            // Append to the right column (manualPrograms)
-            document.getElementById("manualPrograms").appendChild(bingoContainer);
+            topRow.appendChild(bingoBox);
           }
         }
+
+        autoContainer.appendChild(topRow);
+
+        // Section headers aligned
+        autoContainer.innerHTML += '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
+        manContainer.innerHTML += '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
+
+        const manualSections = [];
+        let bypassSection = null;
 
         Object.entries(settings).forEach(([program, fields]) => {
           if (typeof fields !== "object") return;
@@ -789,71 +736,42 @@
           const content = document.createElement("div");
           content.className = "space-y-2 mt-2";
 
-          header.addEventListener("click", () => {
-            content.classList.toggle("collapsed");
-          });
+          header.addEventListener("click", () => content.classList.toggle("collapsed"));
 
           const paramMap = isF16
-            ? {
-                Quantity: "SalvoQuantity",
-                Repeat: "BurstQuantity",
-                Interval: "SalvoInterval", // Could be BurstInterval too
-              }
-            : {
-                Quantity: "Quantity",
-                Repeat: "Repeat",
-                Interval: "Interval",
-              };
+            ? { Quantity: "SalvoQuantity", Repeat: "BurstQuantity", Interval: "SalvoInterval" }
+            : { Quantity: "Quantity", Repeat: "Repeat", Interval: "Interval" };
 
           ["Quantity", "Repeat", "Interval"].forEach((param) => {
             const row = document.createElement("div");
             row.className = "flex gap-4 items-end";
 
             ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
-              const fieldKey = type;
-              const typeData = fields[fieldKey];
+              const typeData = fields[type];
               if (!typeData || typeData[paramMap[param]] === undefined) return;
 
               const col = document.createElement("div");
               col.className = "flex flex-col";
-
               const label = document.createElement("label");
               label.textContent = param === "Quantity" ? `${type} Qty` : param;
-              col.appendChild(label);
-
               const input = document.createElement("input");
               input.type = "number";
-
-              let step = 1,
-                min = 0,
-                max = 100;
-              if (param === "Interval") {
-                step = 0.25;
-                min = 0.25;
-                max = 5;
-              } else if (param === "Repeat") {
-                step = 1;
-                min = 1;
-                max = 24;
-              }
-
-              input.step = step;
-              input.min = min;
-              input.max = max;
+              input.step = param === "Interval" ? 0.25 : 1;
+              input.min = param === "Interval" ? 0.25 : 1;
+              input.max = param === "Interval" ? 5 : 100;
               input.value = typeData[paramMap[param]];
-
               input.onblur = () => {
                 let v = parseFloat(input.value);
                 if (!isNaN(v)) {
-                  v = Math.round(v / step) * step;
-                  v = Math.max(min, Math.min(max, v));
+                  v = Math.round(v / input.step) * input.step;
+                  v = Math.max(input.min, Math.min(input.max, v));
                   input.value = v;
                   typeData[paramMap[param]] = v;
                 } else {
                   input.value = typeData[paramMap[param]];
                 }
               };
-
+              col.appendChild(label);
               col.appendChild(input);
               row.appendChild(col);
             });
@@ -871,28 +789,6 @@
 
         manualSections.forEach((s) => manContainer.appendChild(s));
         if (bypassSection) manContainer.appendChild(bypassSection);
-      }
-
-      function downloadJson() {
-        const fileName = document.getElementById("filename").value;
-
-        if (!jsonData.data) jsonData.data = {};
-        jsonData.data.name = "";
-        jsonData.data.type = currentAircraftType;
-
-        jsonData.name = fileName.replace(/\.json$/, "");
-        jsonData.type = currentAircraftType;
-
-        const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
-          type: "application/json",
-        });
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName.endsWith(".DTC") ? fileName : `${fileName}.DTC`;
-        a.click();
-        URL.revokeObjectURL(url);
       }
 
       async function loadDefaultJson() {
