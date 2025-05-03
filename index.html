@@ -61,7 +61,6 @@
     <div class="mb-6">
       <p class="mb-2 text-sm">An online DTC Web Editor for DCS</p>
       <p class="mb-2 text-sm">By DSplayer</p>
-      <!-- <input type="file" id="fileInput" accept="application/json" class="mb-4" /> -->
     </div>
 
     <div class="mb-4 flex gap-4">
@@ -69,7 +68,6 @@
       <select id="aircraftSelect" class="border p-1 rounded">
         <option value="FA-18C_hornet">F/A-18C Hornet</option>
         <option value="F-16C_50">F-16C Block 50</option>
-        <!-- Add more aircraft as needed -->
       </select>
     </div>
 
@@ -81,16 +79,30 @@
     </div>
 
     <!-- PROGRAM SETTINGS TAB -->
-    <div id="programTab">
-      <div class="mb-6">
-        <label class="block mb-1">Global AUTO Delay Between Programs (sec):</label>
-        <input type="number" id="globalDelay" step="0.25" min="0" max="99" />
+    <div id="programTab" class="space-y-6">
+      <!-- First row: Global Delay + Bingo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <!-- Global AUTO Delay -->
+        <div>
+          <label class="block mb-1 font-semibold">Global AUTO Delay Between Programs (sec):</label>
+          <input type="number" id="globalDelay" step="0.25" min="0" max="99" class="w-32" />
+        </div>
+
+        <!-- Bingo Settings (only visible for F-16) -->
+        <div id="bingoSettingsContainer" class="hidden">
+          <label class="block mb-1 font-semibold">Bingo Settings</label>
+          <div class="grid grid-cols-2 gap-4" id="bingoSettingsFields"></div>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <!-- Second row: Auto / Manual -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <!-- AUTO PROGRAMS -->
         <div id="autoPrograms">
           <h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>
         </div>
+
+        <!-- MANUAL PROGRAMS -->
         <div id="manualPrograms">
           <h2 class="text-lg font-semibold mb-2">Manual Programs</h2>
         </div>
@@ -197,7 +209,7 @@
       let jsonData = null;
       let currentThreatCategory = "Air";
       let currentAircraftType = "FA-18C_hornet";
-      let currentTabId = "programTab"; // Track active tab globally
+      let currentTabId = "programTab";
 
       const aircraftCapabilities = {
         "FA-18C_hornet": {
@@ -210,7 +222,6 @@
           hasThreatTable: true,
           hasComm: true,
         },
-        // Add more aircraft as needed
       };
 
       const dtcPaths = {
@@ -220,22 +231,51 @@
           delayBetweenPrograms: () => jsonData?.data?.ALR67?.CMDS?.delay_between_programs,
         },
         "F-16C_50": {
+          bingoSettings: () => jsonData?.data?.MPD?.CMDS?.CMDSBingoSettings,
           programSettings: () => jsonData?.data?.MPD?.CMDS?.CMDSProgramSettings,
           threatTable: () => jsonData?.data?.MPD?.CMDS?.CMDSPrograms,
-          delayBetweenPrograms: () => jsonData?.data?.MPD?.CMDS?.delayBetweenPrograms,
+          delayBetweenPrograms: () => jsonData?.data?.MPD?.CMDS?.CMDSPrograms?.delayBetweenPrograms,
+        },
+      };
+
+      const CMDS_FIELD_MAP = {
+        "FA-18C_hornet": {
+          paramMap: {
+            Quantity: { key: "Quantity", label: "Qty" },
+            Repeat: { key: "Repeat", label: "Repeat" },
+            Interval: { key: "Interval", label: "Interval" },
+          },
+          delayKey: "delay_between_programs",
+          getField: (fields, type, param) => fields[type]?.[param],
+          setField: (fields, type, param, value) => {
+            if (fields[type]) fields[type][param] = value;
+          },
+        },
+        "F-16C_50": {
+          paramMap: {
+            SalvoQuantity: { key: "SalvoQuantity", label: "Salvo Qty" },
+            BurstQuantity: { key: "BurstQuantity", label: "Burst Qty" },
+            SalvoInterval: { key: "SalvoInterval", label: "Salvo Int." },
+            BurstInterval: { key: "BurstInterval", label: "Burst Int." },
+          },
+          delayKey: "delayBetweenPrograms",
+          getField: (fields, type, param) => fields[type?.toLowerCase()]?.[param],
+          setField: (fields, type, param, value) => {
+            const t = type?.toLowerCase();
+            if (fields[t]) fields[t][param] = value;
+          },
         },
       };
 
       function updateTabVisibilityForAircraft(type) {
         const caps = aircraftCapabilities[type] || {};
 
-        renderTabButtons(); // Recreate buttons for the selected aircraft
+        renderTabButtons();
 
         toggleElement("programTab", caps.hasPrograms);
         toggleElement("threatTab", caps.hasThreatTable);
         toggleElement("commTab", caps.hasComm);
 
-        // Only switch tab if current one is no longer valid
         const validTab = caps[`has${capitalize(currentTabId.replace("Tab", ""))}`] ?? false;
 
         if (!validTab) {
@@ -326,9 +366,6 @@
           btn.onclick = () => switchTab(id);
           container.appendChild(btn);
         });
-
-        // Restore correct tab button highlighting after re-render
-        // switchTab(currentTabId);
       }
 
       function switchTab(tabId) {
@@ -358,7 +395,7 @@
         } else if (tabId === "commTab") {
           renderCommTab();
         }
-        currentTabId = tabId; // Track tab on each switch
+        currentTabId = tabId;
       }
 
       function switchThreatCategory(category) {
@@ -370,15 +407,30 @@
         });
         document.getElementById(`cat-${category}`).classList.add("bg-blue-600", "text-white");
       }
+
       function renderThreatTable(category) {
         const tableBody = document.getElementById("threatTableBody");
         tableBody.innerHTML = "";
 
-        const rows = dtcPaths[currentAircraftType]?.threatTable?.()[category] || [];
+        let rows = [];
+        const threatData = dtcPaths[currentAircraftType]?.threatTable?.();
+
+        if (currentAircraftType === "FA-18C_hornet") {
+          rows = threatData?.[category] || [];
+        } else if (currentAircraftType === "F-16C_50") {
+          // F-16 threat table has different structure
+          if (threatData) {
+            rows = Object.values(threatData).filter(
+              (entry) =>
+                entry.category === category ||
+                (category === "Other" && !["Air", "Ground", "Naval"].includes(entry.category))
+            );
+          }
+        }
 
         const searchQuery = document.getElementById("threatSearch")?.value?.toLowerCase() || "";
         const filteredRows = rows.filter((entry) => {
-          const name = entry.group_name?.toLowerCase() || "";
+          const name = entry.group_name?.toLowerCase() || entry.name?.toLowerCase() || "";
           const hint = entry.hint?.toLowerCase() || "";
           return name.includes(searchQuery) || hint.includes(searchQuery);
         });
@@ -396,33 +448,39 @@
           // Threat Radar
           const tdName = document.createElement("td");
           tdName.className = "p-2";
-          tdName.textContent = entry.group_name || entry.hint || "Unknown";
+          tdName.textContent = entry.group_name || entry.name || entry.hint || "Unknown";
           if (entry.hint) {
             tdName.title = entry.hint.replace(/\n/g, ", ");
           }
           tr.appendChild(tdName);
 
-          // Threshold (dropdown from entry.thresholds[].label)
+          // Threshold
           const tdThresh = document.createElement("td");
           tdThresh.className = "p-2";
           const selThresh = document.createElement("select");
 
           (entry.thresholds || []).forEach((th) => {
             const option = document.createElement("option");
-            option.value = th.label;
-            option.textContent = th.label;
-            if (entry.default_threshold?.label === th.label) option.selected = true;
+            option.value = th.label || th;
+            option.textContent = th.label || th;
+            if (entry.default_threshold?.label === th.label || entry.defaultThreshold === th) {
+              option.selected = true;
+            }
             selThresh.appendChild(option);
           });
 
           selThresh.onchange = () => {
-            entry.default_threshold.label = selThresh.value;
+            if (currentAircraftType === "FA-18C_hornet") {
+              entry.default_threshold.label = selThresh.value;
+            } else {
+              entry.defaultThreshold = selThresh.value;
+            }
           };
 
           tdThresh.appendChild(selThresh);
           tr.appendChild(tdThresh);
 
-          // Program (numeric: 1 = AUTO_1, 2 = AUTO_2, etc.)
+          // Program
           const tdProg = document.createElement("td");
           tdProg.className = "p-2";
           const selProg = document.createElement("select");
@@ -534,7 +592,6 @@
               tbody.appendChild(tr);
             });
 
-          // Guard checkbox (only present in Hornet files)
           if ("Guard" in comm && currentAircraftType === "FA-18C_hornet") {
             const trGuard = document.createElement("tr");
             trGuard.innerHTML = `<td colspan="4" class="p-2 pt-4">
@@ -558,6 +615,64 @@
       function renderConfigurator() {
         const settings = dtcPaths[currentAircraftType]?.programSettings?.();
         if (!settings) return;
+
+        const bingoContainer = document.getElementById("bingoSettingsContainer");
+        const bingoFields = document.getElementById("bingoSettingsFields");
+        bingoContainer.classList.add("hidden"); // hide by default
+
+        if (currentAircraftType === "F-16C_50") {
+          const bingoData = dtcPaths["F-16C_50"]?.bingoSettings?.();
+          if (bingoData) {
+            bingoContainer.classList.remove("hidden");
+            bingoFields.innerHTML = "";
+
+            const bingoMap = {
+              BINGO: "Bingo Enabled",
+              FDBK: "Feedback",
+              REQCTR: "Require Counter",
+              ChaffNum: "Chaff Qty",
+              FlaresNum: "Flare Qty",
+              Other1Num: "Other1 Qty",
+              Other2Num: "Other2 Qty",
+            };
+
+            Object.entries(bingoMap).forEach(([key, label]) => {
+              const wrapper = document.createElement("div");
+
+              if (typeof bingoData[key] === "boolean") {
+                wrapper.innerHTML = `
+          <label class="flex items-center gap-2">
+            <input type="checkbox" ${bingoData[key] ? "checked" : ""}>
+            <span>${label}</span>
+          </label>
+        `;
+                const checkbox = wrapper.querySelector("input");
+                checkbox.onchange = () => {
+                  bingoData[key] = checkbox.checked;
+                };
+              } else {
+                const input = document.createElement("input");
+                input.type = "number";
+                input.value = bingoData[key];
+                input.className = "w-20";
+                input.onchange = () => {
+                  bingoData[key] = parseInt(input.value);
+                };
+
+                const labelEl = document.createElement("label");
+                labelEl.textContent = label;
+                labelEl.className = "block text-sm";
+
+                wrapper.appendChild(labelEl);
+                wrapper.appendChild(input);
+              }
+
+              bingoFields.appendChild(wrapper);
+            });
+          }
+        }
+
+        const isF16 = currentAircraftType === "F-16C_50";
         const autoContainer = document.getElementById("autoPrograms");
         const manContainer = document.getElementById("manualPrograms");
         autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
@@ -584,8 +699,85 @@
           };
         }
 
+        if (currentAircraftType === "F-16C_50") {
+          const bingo = dtcPaths["F-16C_50"]?.bingoSettings?.();
+          if (bingo) {
+            const bingoContainer = document.createElement("div");
+            bingoContainer.className = "mb-6";
+
+            const title = document.createElement("h3");
+            title.className = "text-lg font-semibold mb-2";
+            title.textContent = "Bingo Settings";
+            bingoContainer.appendChild(title);
+
+            const fields = [
+              { label: "Chaff", key: "ChaffNum", min: 0, max: 99 },
+              { label: "Flare", key: "FlaresNum", min: 0, max: 99 },
+              { label: "Other1", key: "Other1Num", min: 0, max: 99 },
+              { label: "Other2", key: "Other2Num", min: 0, max: 99 },
+            ];
+
+            const checkboxFields = [
+              { label: "BINGO Warning", key: "BINGO" },
+              { label: "Feedback (FDBK)", key: "FDBK" },
+              { label: "Request Counter (REQCTR)", key: "REQCTR" },
+            ];
+
+            const row = document.createElement("div");
+            row.className = "flex gap-4 mb-4 flex-wrap";
+
+            fields.forEach(({ label, key, min, max }) => {
+              const col = document.createElement("div");
+              col.className = "flex flex-col";
+
+              const lbl = document.createElement("label");
+              lbl.textContent = `${label} Qty`;
+              col.appendChild(lbl);
+
+              const input = document.createElement("input");
+              input.type = "number";
+              input.value = bingo[key];
+              input.min = min;
+              input.max = max;
+              input.className = "w-20";
+              input.onblur = () => {
+                const val = parseInt(input.value);
+                if (!isNaN(val)) bingo[key] = Math.max(min, Math.min(max, val));
+                else input.value = bingo[key];
+              };
+              col.appendChild(input);
+              row.appendChild(col);
+            });
+
+            bingoContainer.appendChild(row);
+
+            checkboxFields.forEach(({ label, key }) => {
+              const checkboxDiv = document.createElement("div");
+              checkboxDiv.className = "mb-2";
+
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = bingo[key];
+              checkbox.onchange = () => {
+                bingo[key] = checkbox.checked;
+              };
+
+              const lbl = document.createElement("label");
+              lbl.className = "ml-2";
+              lbl.textContent = label;
+
+              checkboxDiv.appendChild(checkbox);
+              checkboxDiv.appendChild(lbl);
+              bingoContainer.appendChild(checkboxDiv);
+            });
+
+            // Append to the right column (manualPrograms)
+            document.getElementById("manualPrograms").appendChild(bingoContainer);
+          }
+        }
+
         Object.entries(settings).forEach(([program, fields]) => {
-          if (typeof fields !== "object" || !fields.Chaff || !fields.Flare) return;
+          if (typeof fields !== "object") return;
 
           const section = document.createElement("div");
           section.className = "program-section";
@@ -601,12 +793,26 @@
             content.classList.toggle("collapsed");
           });
 
+          const paramMap = isF16
+            ? {
+                Quantity: "SalvoQuantity",
+                Repeat: "BurstQuantity",
+                Interval: "SalvoInterval", // Could be BurstInterval too
+              }
+            : {
+                Quantity: "Quantity",
+                Repeat: "Repeat",
+                Interval: "Interval",
+              };
+
           ["Quantity", "Repeat", "Interval"].forEach((param) => {
             const row = document.createElement("div");
             row.className = "flex gap-4 items-end";
 
             ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
-              if (!fields[type] || fields[type][param] === undefined) return;
+              const fieldKey = type;
+              const typeData = fields[fieldKey];
+              if (!typeData || typeData[paramMap[param]] === undefined) return;
 
               const col = document.createElement("div");
               col.className = "flex flex-col";
@@ -634,7 +840,7 @@
               input.step = step;
               input.min = min;
               input.max = max;
-              input.value = fields[type][param];
+              input.value = typeData[paramMap[param]];
 
               input.onblur = () => {
                 let v = parseFloat(input.value);
@@ -642,9 +848,9 @@
                   v = Math.round(v / step) * step;
                   v = Math.max(min, Math.min(max, v));
                   input.value = v;
-                  fields[type][param] = v;
+                  typeData[paramMap[param]] = v;
                 } else {
-                  input.value = fields[type][param];
+                  input.value = typeData[paramMap[param]];
                 }
               };
 
@@ -672,10 +878,10 @@
 
         if (!jsonData.data) jsonData.data = {};
         jsonData.data.name = "";
-        jsonData.data.type = currentAircraft;
+        jsonData.data.type = currentAircraftType;
 
         jsonData.name = fileName.replace(/\.json$/, "");
-        jsonData.type = currentAircraft;
+        jsonData.type = currentAircraftType;
 
         const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
           type: "application/json",
@@ -691,10 +897,14 @@
 
       async function loadDefaultJson() {
         try {
-          const res = await fetch("FA-18C_Lot20_DTC1_DEFAULT.json");
+          const res = await fetch(
+            currentAircraftType === "F-16C_50"
+              ? "F-16CM_bl50_DTC_1_DEFAULT.json"
+              : "FA-18C_Lot20_DTC1_DEFAULT.json"
+          );
           jsonData = await res.json();
           renderConfigurator();
-          renderCommTab(); // <- ADD THIS
+          renderCommTab();
         } catch {
           alert("Failed to load default configuration.");
         }
@@ -727,7 +937,7 @@
               });
             }
 
-            renderTabButtons(); // Refresh tabs
+            renderTabButtons();
             renderConfigurator();
             renderCommTab();
           } catch {
@@ -747,7 +957,6 @@
 
         updateTabVisibilityForAircraft(selected);
 
-        // After rendering buttons, re-activate the same tab if supported by aircraft
         const caps = aircraftCapabilities[selected];
         const fallbackTab = caps.hasPrograms
           ? "programTab"
@@ -760,6 +969,9 @@
           : fallbackTab;
 
         switchTab(tabToShow);
+
+        // Load appropriate default JSON when switching aircraft
+        loadDefaultJson();
       });
 
       updateTabVisibilityForAircraft(currentAircraftType);
