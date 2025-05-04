@@ -761,6 +761,12 @@ document.getElementById("aircraftSelect").addEventListener("change", (e) => {
 
   // 🔧 Update the default filename when aircraft changes
   const defaultName = `${selected.replace(/_/g, "-")}_Custom.dtc`;
+  // let defaultName = "DTC_Custom.dtc";
+  // if (currentAircraftType === "F-16C_50") {
+  //   const defaultName = `F-16_Custom.dtc`;
+  // } else if (currentAircraftType === "FA-18C_Hornet") {
+  //   const defaultName = `F-18_Custom.dtc`;
+  // }
   document.getElementById("filename").value = defaultName;
 
   updateTabVisibilityForAircraft(selected);
