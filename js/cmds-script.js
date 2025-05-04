@@ -122,6 +122,8 @@ function toggleDarkMode() {
   applyTheme();
 }
 
+window.toggleDarkMode = toggleDarkMode;
+
 // Renders tab buttons dynamically based on aircraft capabilities
 function renderTabButtons() {
   const container = document.getElementById("tabButtons");
