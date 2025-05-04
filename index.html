@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMDS Program Editor</title>
+
+    <!-- Tailwind CSS CDN -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
     />
+
+    <!-- Custom Theme Styling -->
     <style>
       :root {
         --bg-color: #f5f5f5;
@@ -15,18 +19,21 @@
         --input-bg: #fff;
         --input-border: #ccc;
       }
+
       [data-theme="dark"] {
         --bg-color: #121212;
         --text-color: #f0f0f0;
         --input-bg: #1e1e1e;
         --input-border: #444;
       }
+
       body {
         background-color: var(--bg-color);
         color: var(--text-color);
         font-family: Arial, sans-serif;
         transition: background-color 0.3s, color 0.3s;
       }
+
       input,
       select {
         background-color: var(--input-bg);
@@ -35,14 +42,17 @@
         padding: 5px;
         border-radius: 4px;
       }
+
       .section-header {
         font-weight: bold;
         font-size: 1rem;
         margin-top: 1.5rem;
       }
+
       .collapsed {
         display: none;
       }
+
       .program-section {
         border-top: 1px solid var(--input-border);
         margin-bottom: 1.25rem;
@@ -50,7 +60,9 @@
       }
     </style>
   </head>
+
   <body class="p-6">
+    <!-- Header Section -->
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">DCS DTC Web Editor</h1>
       <button onclick="toggleDarkMode()" id="themeToggle" class="px-4 py-2 border rounded">
@@ -58,12 +70,14 @@
       </button>
     </div>
 
-    <div class="mb-6">
-      <p class="mb-2 text-sm">An online DTC Web Editor for DCS</p>
-      <p class="mb-2 text-sm">By DSplayer</p>
+    <!-- Description -->
+    <div class="mb-6 text-sm space-y-1">
+      <p>An online DTC Web Editor for DCS</p>
+      <p>By DSplayer</p>
     </div>
 
-    <div class="mb-4 flex gap-4">
+    <!-- Aircraft Selection -->
+    <div class="mb-4 flex gap-4 items-center">
       <label for="aircraftSelect" class="font-semibold">Select Aircraft:</label>
       <select id="aircraftSelect" class="border p-1 rounded">
         <option value="FA-18C_hornet">F/A-18C Hornet</option>
@@ -71,26 +85,18 @@
       </select>
     </div>
 
+    <!-- Tab Buttons Placeholder -->
     <div id="tabButtons" class="mb-4 flex gap-4"></div>
 
-    <!-- <div class="mb-6">
-      <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
-      <input type="file" id="fileInput" accept="application/DTC" class="mb-4" />
-      <p class="mb-2 text-sm">Download your DTC here:</p>
-      <input type="text" id="filename" value="DTC_Custom.DTC" />
-      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
-        Download DTC
-      </button>
-    </div> -->
-
+    <!-- Upload/Download Section -->
     <div class="flex justify-between gap-8 mb-6">
-      <!-- Upload DTC Section -->
+      <!-- Upload -->
       <div class="w-72">
         <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
         <input type="file" id="fileInput" accept="application/DTC" class="mb-4 w-full" />
       </div>
 
-      <!-- Download DTC Section -->
+      <!-- Download -->
       <div class="w-72">
         <p class="mb-2 text-sm">Download your DTC here:</p>
         <div class="flex gap-2">
@@ -105,17 +111,9 @@
       </div>
     </div>
 
-    <!-- <div class="mt-6 flex gap-4 items-center">
-      <label for="filename">Filename:</label>
-      <input type="text" id="filename" value="DTC_Custom.DTC" />
-      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
-        Download DTC
-      </button>
-    </div> -->
-
-    <!-- PROGRAM SETTINGS TAB -->
+    <!-- CMDS Program Editor -->
     <div id="programTab" class="space-y-6">
-      <!-- First row: Global Delay + Bingo -->
+      <!-- Global Delay + Bingo Settings -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <!-- Global AUTO Delay -->
         <div>
@@ -123,30 +121,29 @@
           <input type="number" id="globalDelay" step="0.25" min="0" max="99" class="w-32" />
         </div>
 
-        <!-- Bingo Settings (only visible for F-16) -->
+        <!-- Bingo Settings (Visible for F-16 only) -->
         <div id="bingoSettingsContainer" class="hidden">
           <label class="text-lg font-semibold mb-2">Bingo Settings</label>
           <div class="grid grid-cols-2 gap-4" id="bingoSettingsFields"></div>
         </div>
       </div>
 
-      <!-- Second row: Auto / Manual -->
+      <!-- AUTO and MANUAL Programs -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        <!-- AUTO PROGRAMS -->
         <div id="autoPrograms">
           <h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>
         </div>
-
-        <!-- MANUAL PROGRAMS -->
         <div id="manualPrograms">
           <h2 class="text-lg font-semibold mb-2">Manual Programs</h2>
         </div>
       </div>
     </div>
-    <!-- THREAT TABLE TAB -->
+
+    <!-- Threat Table -->
     <div id="threatTab" class="hidden">
       <h2 class="text-xl font-bold mb-2">CMDS Threat Table</h2>
 
+      <!-- Search -->
       <input
         type="text"
         id="threatSearch"
@@ -154,6 +151,7 @@
         class="mb-2 px-2 py-1 border rounded w-full max-w-md"
       />
 
+      <!-- Category Filters -->
       <div class="mb-4 flex gap-2">
         <button onclick="switchThreatCategory('Air')" class="px-3 py-1 border rounded" id="cat-Air">
           Air
@@ -181,6 +179,7 @@
         </button>
       </div>
 
+      <!-- Threat Table -->
       <table class="w-full text-sm border-collapse">
         <thead>
           <tr class="border-b">
@@ -194,10 +193,13 @@
       </table>
     </div>
 
-    <!-- COMM TAB -->
+    <!-- COMM Tab -->
     <div id="commTab" class="hidden">
       <h2 class="text-xl font-bold mb-4">COMM Channels</h2>
+
+      <!-- COMM1 and COMM2 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- COMM1 -->
         <div id="comm1Section">
           <h3 class="font-semibold mb-2">COMM1</h3>
           <table class="w-full text-sm border-collapse">
@@ -212,6 +214,8 @@
             <tbody id="comm1Body"></tbody>
           </table>
         </div>
+
+        <!-- COMM2 -->
         <div id="comm2Section">
           <h3 class="font-semibold mb-2">COMM2</h3>
           <table class="w-full text-sm border-collapse">
@@ -229,6 +233,7 @@
       </div>
     </div>
 
+    <!-- External Script -->
     <script src="js/cmds_script.js"></script>
   </body>
 </html>
