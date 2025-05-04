@@ -90,7 +90,7 @@
 
         <!-- Bingo Settings (only visible for F-16) -->
         <div id="bingoSettingsContainer" class="hidden">
-          <label class="block mb-1 font-semibold">Bingo Settings</label>
+          <label class="text-lg font-semibold mb-2">Bingo Settings</label>
           <div class="grid grid-cols-2 gap-4" id="bingoSettingsFields"></div>
         </div>
       </div>
@@ -228,7 +228,8 @@
         "FA-18C_hornet": {
           programSettings: () => jsonData?.data?.ALR67?.CMDS?.CMDSProgramSettings,
           threatTable: () => jsonData?.data?.ALR67?.CMDS?.CMDS_Threat_table,
-          delayBetweenPrograms: () => jsonData?.data?.ALR67?.CMDS?.delay_between_programs,
+          delayBetweenPrograms: () =>
+            jsonData?.data?.ALR67?.CMDS?.CMDSProgramSettings?.delay_between_programs,
         },
         "F-16C_50": {
           bingoSettings: () => jsonData?.data?.MPD?.CMDS?.CMDSBingoSettings,
@@ -238,34 +239,34 @@
         },
       };
 
-      const CMDS_FIELD_MAP = {
-        "FA-18C_hornet": {
-          paramMap: {
-            Quantity: { key: "Quantity", label: "Qty" },
-            Repeat: { key: "Repeat", label: "Repeat" },
-            Interval: { key: "Interval", label: "Interval" },
-          },
-          delayKey: "delay_between_programs",
-          getField: (fields, type, param) => fields[type]?.[param],
-          setField: (fields, type, param, value) => {
-            if (fields[type]) fields[type][param] = value;
-          },
-        },
-        "F-16C_50": {
-          paramMap: {
-            SalvoQuantity: { key: "SalvoQuantity", label: "Salvo Qty" },
-            BurstQuantity: { key: "BurstQuantity", label: "Burst Qty" },
-            SalvoInterval: { key: "SalvoInterval", label: "Salvo Int." },
-            BurstInterval: { key: "BurstInterval", label: "Burst Int." },
-          },
-          delayKey: "delayBetweenPrograms",
-          getField: (fields, type, param) => fields[type?.toLowerCase()]?.[param],
-          setField: (fields, type, param, value) => {
-            const t = type?.toLowerCase();
-            if (fields[t]) fields[t][param] = value;
-          },
-        },
-      };
+      // const CMDS_FIELD_MAP = {
+      //   "FA-18C_hornet": {
+      //     paramMap: {
+      //       Quantity: { key: "Quantity", label: "Qty" },
+      //       Repeat: { key: "Repeat", label: "Repeat" },
+      //       Interval: { key: "Interval", label: "Interval" },
+      //     },
+      //     delayKey: "delay_between_programs",
+      //     getField: (fields, type, param) => fields[type]?.[param],
+      //     setField: (fields, type, param, value) => {
+      //       if (fields[type]) fields[type][param] = value;
+      //     },
+      //   },
+      //   "F-16C_50": {
+      //     paramMap: {
+      //       SalvoQuantity: { key: "SalvoQuantity", label: "Salvo Qty" },
+      //       BurstQuantity: { key: "BurstQuantity", label: "Burst Qty" },
+      //       SalvoInterval: { key: "SalvoInterval", label: "Salvo Int." },
+      //       BurstInterval: { key: "BurstInterval", label: "Burst Int." },
+      //     },
+      //     delayKey: "delayBetweenPrograms",
+      //     getField: (fields, type, param) => fields[type?.toLowerCase()]?.[param],
+      //     setField: (fields, type, param, value) => {
+      //       const t = type?.toLowerCase();
+      //       if (fields[t]) fields[t][param] = value;
+      //     },
+      //   },
+      // };
 
       function updateTabVisibilityForAircraft(type) {
         const caps = aircraftCapabilities[type] || {};
@@ -276,7 +277,14 @@
         toggleElement("threatTab", caps.hasThreatTable);
         toggleElement("commTab", caps.hasComm);
 
-        const validTab = caps[`has${capitalize(currentTabId.replace("Tab", ""))}`] ?? false;
+        // Normalize to match capability keys (e.g., 'hasThreatTable', 'hasComm')
+        const tabKeyMap = {
+          programTab: "hasPrograms",
+          threatTab: "hasThreatTable",
+          commTab: "hasComm",
+        };
+
+        const validTab = caps[tabKeyMap[currentTabId]] ?? false;
 
         if (!validTab) {
           if (caps.hasPrograms) currentTabId = "programTab";
@@ -419,13 +427,14 @@
           rows = threatData?.[category] || [];
         } else if (currentAircraftType === "F-16C_50") {
           // F-16 threat table has different structure
-          if (threatData) {
-            rows = Object.values(threatData).filter(
-              (entry) =>
-                entry.category === category ||
-                (category === "Other" && !["Air", "Ground", "Naval"].includes(entry.category))
-            );
-          }
+          //   if (threatData) {
+          //     rows = Object.values(threatData).filter(
+          //       (entry) =>
+          //         entry.category === category ||
+          //         (category === "Other" && !["Air", "Ground", "Naval"].includes(entry.category))
+          //     );
+          //   }
+          rows = threatData?.[category] || [];
         }
 
         const searchQuery = document.getElementById("threatSearch")?.value?.toLowerCase() || "";
@@ -616,112 +625,122 @@
         const settings = dtcPaths[currentAircraftType]?.programSettings?.();
         if (!settings) return;
 
-        const isF16 = currentAircraftType === "F-16C_50";
-        const autoContainer = document.getElementById("autoPrograms");
-        const manContainer = document.getElementById("manualPrograms");
+        const bingoContainer = document.getElementById("bingoSettingsContainer");
+        const bingoFields = document.getElementById("bingoSettingsFields");
+        bingoContainer.classList.add("hidden");
 
-        autoContainer.innerHTML = "";
-        manContainer.innerHTML = "";
+        if (currentAircraftType === "F-16C_50") {
+          const bingoData = dtcPaths["F-16C_50"]?.bingoSettings?.();
+          if (bingoData) {
+            bingoContainer.classList.remove("hidden");
+            bingoFields.innerHTML = "";
 
-        // Top row: Delay + Bingo Settings (aligned)
-        const topRow = document.createElement("div");
-        topRow.className = "grid grid-cols-1 md:grid-cols-2 gap-6 mb-6";
+            // Quantity input definitions
+            const qtyFields = [
+              { key: "ChaffNum", label: "Chaff Qty", min: 0, max: 99 },
+              { key: "FlaresNum", label: "Flare Qty", min: 0, max: 99 },
+              { key: "Other1Num", label: "Other1 Qty", min: 0, max: 99 },
+              { key: "Other2Num", label: "Other2 Qty", min: 0, max: 99 },
+            ];
 
-        // --- Global Delay ---
-        const delayBox = document.createElement("div");
-        delayBox.innerHTML = `
-    <label class="block font-medium mb-1">Global AUTO Delay Between Programs (sec):</label>
-    <input type="number" id="globalDelay" step="0.25" min="0" max="99" class="w-32" />
-  `;
-        const delayInput = delayBox.querySelector("input");
-        const delayVal = dtcPaths[currentAircraftType]?.delayBetweenPrograms?.();
-        if (typeof delayVal === "number") {
-          delayInput.value = delayVal;
-          delayInput.onblur = () => {
-            let v = parseFloat(delayInput.value);
-            if (!isNaN(v)) {
-              v = Math.round(v / 0.25) * 0.25;
-              v = Math.max(0, Math.min(99, v));
-              delayInput.value = v;
-              if (currentAircraftType === "FA-18C_hornet")
-                jsonData.data.ALR67.CMDS.delay_between_programs = v;
-              else if (isF16) jsonData.data.MPD.CMDS.delayBetweenPrograms = v;
-            }
-          };
-        }
-        topRow.appendChild(delayBox);
+            // Checkbox setting definitions
+            const checkboxFields = [
+              { key: "BINGO", label: "BINGO Warning" },
+              { key: "FDBK", label: "Feedback (FDBK)" },
+              { key: "REQCTR", label: "Request Counter (REQCTR)" },
+            ];
 
-        // --- Bingo Settings (F-16 only) ---
-        if (isF16) {
-          const bingo = dtcPaths["F-16C_50"]?.bingoSettings?.();
-          if (bingo) {
-            const bingoBox = document.createElement("div");
+            // ─── Quantity Row ───
+            const qtyRow = document.createElement("div");
+            qtyRow.className = "flex flex-nowrap gap-4 mb-4 overflow";
 
-            const title = document.createElement("h3");
-            title.className = "text-lg font-semibold mb-2";
-            title.textContent = "Bingo Settings";
-            bingoBox.appendChild(title);
-
-            const fieldRow = document.createElement("div");
-            fieldRow.className = "flex gap-4 flex-wrap mb-4";
-
-            [
-              { label: "Chaff", key: "ChaffNum" },
-              { label: "Flare", key: "FlaresNum" },
-              { label: "Other1", key: "Other1Num" },
-              { label: "Other2", key: "Other2Num" },
-            ].forEach(({ label, key }) => {
+            qtyFields.forEach(({ key, label, min, max }) => {
               const col = document.createElement("div");
-              col.className = "flex flex-col";
+              col.className = "flex flex-col min-w-[100px]"; // Enforce consistent field width
+
               const lbl = document.createElement("label");
-              lbl.textContent = `${label} Qty`;
+              lbl.className = "block text-sm font-medium mb-1";
+              lbl.textContent = label;
+
               const input = document.createElement("input");
               input.type = "number";
               input.className = "w-20";
-              input.value = bingo[key];
+              input.min = min;
+              input.max = max;
+              input.value = bingoData[key];
               input.onblur = () => {
                 const val = parseInt(input.value);
-                if (!isNaN(val)) bingo[key] = Math.max(0, Math.min(99, val));
-                else input.value = bingo[key];
+                if (!isNaN(val)) bingoData[key] = Math.max(min, Math.min(max, val));
+                else input.value = bingoData[key];
               };
+
               col.appendChild(lbl);
               col.appendChild(input);
-              fieldRow.appendChild(col);
+              qtyRow.appendChild(col);
             });
 
-            bingoBox.appendChild(fieldRow);
+            // ─── Checkbox Row ───
+            const checkboxRow = document.createElement("div");
+            checkboxRow.className = "flex flex-wrap gap-x-6 gap-y-2"; // Removed mb-2 to use gap from container
 
-            [
-              { label: "BINGO Warning", key: "BINGO" },
-              { label: "Feedback (FDBK)", key: "FDBK" },
-              { label: "Request Counter (REQCTR)", key: "REQCTR" },
-            ].forEach(({ label, key }) => {
-              const cbDiv = document.createElement("div");
-              cbDiv.className = "mb-2";
-              const cb = document.createElement("input");
-              cb.type = "checkbox";
-              cb.checked = bingo[key];
-              cb.onchange = () => (bingo[key] = cb.checked);
-              const lbl = document.createElement("label");
-              lbl.className = "ml-2";
-              lbl.textContent = label;
-              cbDiv.appendChild(cb);
-              cbDiv.appendChild(lbl);
-              bingoBox.appendChild(cbDiv);
+            checkboxFields.forEach(({ key, label }) => {
+              const checkboxWrapper = document.createElement("label");
+              checkboxWrapper.className = "flex items-center gap-2";
+
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = bingoData[key];
+              checkbox.onchange = () => {
+                bingoData[key] = checkbox.checked;
+              };
+
+              const span = document.createElement("span");
+              span.textContent = label;
+
+              checkboxWrapper.appendChild(checkbox);
+              checkboxWrapper.appendChild(span);
+              checkboxRow.appendChild(checkboxWrapper);
             });
 
-            topRow.appendChild(bingoBox);
+            // Create a container for better layout control
+            const formContainer = document.createElement("div");
+            formContainer.className = "flex flex-col gap-4";
+
+            // Append rows to container in correct order
+            formContainer.appendChild(qtyRow);
+            formContainer.appendChild(checkboxRow);
+
+            // Add the container to bingoFields
+            bingoFields.appendChild(formContainer);
           }
         }
 
-        autoContainer.appendChild(topRow);
-
-        // Section headers aligned
-        autoContainer.innerHTML += '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
-        manContainer.innerHTML += '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
-
+        // const isF16 = currentAircraftType === "F-16C_50";
+        const autoContainer = document.getElementById("autoPrograms");
+        const manContainer = document.getElementById("manualPrograms");
+        autoContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">AUTO Programs</h2>';
+        manContainer.innerHTML = '<h2 class="text-lg font-semibold mb-2">Manual Programs</h2>';
         const manualSections = [];
         let bypassSection = null;
+
+        const delay = dtcPaths[currentAircraftType]?.delayBetweenPrograms?.();
+        if (typeof delay === "number") {
+          const globalDelayInput = document.getElementById("globalDelay");
+          globalDelayInput.value = delay;
+          globalDelayInput.onblur = () => {
+            let v = parseFloat(globalDelayInput.value);
+            if (!isNaN(v)) {
+              v = Math.round(v / 0.25) * 0.25;
+              v = Math.max(0, Math.min(99, v));
+              globalDelayInput.value = v;
+
+              if (currentAircraftType === "FA-18C_hornet")
+                jsonData.data.ALR67.CMDS.CMDSProgramSettings.delay_between_programs = v;
+              else if (currentAircraftType === "F-16C_50")
+                jsonData.data.MPD.CMDS.CMDSPrograms.delayBetweenPrograms = v;
+            }
+          };
+        }
 
         Object.entries(settings).forEach(([program, fields]) => {
           if (typeof fields !== "object") return;
@@ -736,47 +755,86 @@
           const content = document.createElement("div");
           content.className = "space-y-2 mt-2";
 
-          header.addEventListener("click", () => content.classList.toggle("collapsed"));
+          header.addEventListener("click", () => {
+            content.classList.toggle("collapsed");
+          });
 
-          const paramMap = isF16
-            ? { Quantity: "SalvoQuantity", Repeat: "BurstQuantity", Interval: "SalvoInterval" }
-            : { Quantity: "Quantity", Repeat: "Repeat", Interval: "Interval" };
+          ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
+            const typeData = fields[type];
+            if (!typeData) return;
 
-          ["Quantity", "Repeat", "Interval"].forEach((param) => {
             const row = document.createElement("div");
-            row.className = "flex gap-4 items-end";
+            row.className = "flex gap-4 items-end mb-2";
 
-            ["Chaff", "Flare", "Other1", "Other2"].forEach((type) => {
-              const typeData = fields[type];
-              if (!typeData || typeData[paramMap[param]] === undefined) return;
+            const typeLabel = document.createElement("div");
+            typeLabel.className = "w-16 font-medium";
+            typeLabel.textContent = type;
+            row.appendChild(typeLabel);
+
+            // Define CMDS parameter field schemas per aircraft
+            const paramSchemaMap = {
+              "F-16C_50": [
+                { label: "Burst Qty", key: "BurstQuantity", step: 1, min: 1, max: 99 },
+                { label: "Burst Interval", key: "BurstInterval", step: 0.001, min: 0.02, max: 10 },
+                { label: "Salvo Qty", key: "SalvoQuantity", step: 1, min: 1, max: 99 },
+                { label: "Salvo Interval", key: "SalvoInterval", step: 0.01, min: 0.5, max: 150 },
+              ],
+              "FA-18C_hornet": [
+                { label: "Quantity", key: "Quantity", step: 1, min: 0, max: 100 },
+                { label: "Repeat", key: "Repeat", step: 1, min: 1, max: 24 },
+                { label: "Interval", key: "Interval", step: 0.25, min: 0.25, max: 5 },
+              ],
+              // Add future aircraft support here:
+              // "F-15E": [...],
+              // "JF-17": [...],
+            };
+
+            // Default fallback if type is unknown (safe fallback schema)
+            const defaultSchema = [
+              { label: "Quantity", key: "Quantity", step: 1, min: 0, max: 100 },
+              { label: "Repeat", key: "Repeat", step: 1, min: 1, max: 24 },
+              { label: "Interval", key: "Interval", step: 0.25, min: 0.25, max: 5 },
+            ];
+
+            // Select schema based on current aircraft, or fallback to default
+            const paramFields = paramSchemaMap[currentAircraftType] || defaultSchema;
+
+            paramFields.forEach(({ label, key, step, min, max }) => {
+              if (typeData[key] === undefined) return;
 
               const col = document.createElement("div");
               col.className = "flex flex-col";
-              const label = document.createElement("label");
-              label.textContent = param === "Quantity" ? `${type} Qty` : param;
+
+              const lbl = document.createElement("label");
+              lbl.className = "block text-xs";
+              lbl.textContent = label;
+              col.appendChild(lbl);
+
               const input = document.createElement("input");
               input.type = "number";
-              input.step = param === "Interval" ? 0.25 : 1;
-              input.min = param === "Interval" ? 0.25 : 1;
-              input.max = param === "Interval" ? 5 : 100;
-              input.value = typeData[paramMap[param]];
+              input.className = "w-20";
+              input.step = step;
+              input.min = min;
+              input.max = max;
+              input.value = typeData[key];
+
               input.onblur = () => {
                 let v = parseFloat(input.value);
                 if (!isNaN(v)) {
-                  v = Math.round(v / input.step) * input.step;
-                  v = Math.max(input.min, Math.min(input.max, v));
+                  v = Math.round(v / step) * step;
+                  v = Math.max(min, Math.min(max, v));
                   input.value = v;
-                  typeData[paramMap[param]] = v;
+                  typeData[key] = v;
                 } else {
-                  input.value = typeData[paramMap[param]];
+                  input.value = typeData[key];
                 }
               };
-              col.appendChild(label);
+
               col.appendChild(input);
               row.appendChild(col);
             });
 
-            if (row.children.length > 0) content.appendChild(row);
+            content.appendChild(row);
           });
 
           section.appendChild(header);
@@ -791,6 +849,28 @@
         if (bypassSection) manContainer.appendChild(bypassSection);
       }
 
+      function downloadJson() {
+        const fileName = document.getElementById("filename").value;
+
+        if (!jsonData.data) jsonData.data = {};
+        jsonData.data.name = "";
+        jsonData.data.type = currentAircraftType;
+
+        jsonData.name = fileName.replace(/\.json$/, "");
+        jsonData.type = currentAircraftType;
+
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+          type: "application/json",
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName.endsWith(".DTC") ? fileName : `${fileName}.DTC`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
       async function loadDefaultJson() {
         try {
           const res = await fetch(
@@ -799,8 +879,12 @@
               : "FA-18C_Lot20_DTC1_DEFAULT.json"
           );
           jsonData = await res.json();
+
           renderConfigurator();
           renderCommTab();
+
+          // currentTabId = preservedTabId;
+          updateTabVisibilityForAircraft(currentAircraftType); // switchTab will happen here
         } catch {
           alert("Failed to load default configuration.");
         }
@@ -849,6 +933,7 @@
 
       document.getElementById("aircraftSelect").addEventListener("change", (e) => {
         const selected = e.target.value;
+        const previousTab = currentTabId; // 🔒 Preserve current tab
         currentAircraftType = selected;
 
         updateTabVisibilityForAircraft(selected);
@@ -860,13 +945,19 @@
           ? "threatTab"
           : "commTab";
 
-        const tabToShow = caps[`has${capitalize(currentTabId.replace("Tab", ""))}`]
-          ? currentTabId
+        const tabToShow = caps[
+          {
+            programTab: "hasPrograms",
+            threatTab: "hasThreatTable",
+            commTab: "hasComm",
+          }[previousTab]
+        ]
+          ? previousTab
           : fallbackTab;
 
+        currentTabId = tabToShow; // ✅ Important: Update global tab state
         switchTab(tabToShow);
 
-        // Load appropriate default JSON when switching aircraft
         loadDefaultJson();
       });
 
