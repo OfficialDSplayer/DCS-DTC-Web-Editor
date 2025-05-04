@@ -203,6 +203,8 @@ function switchThreatCategory(category) {
   if (activeBtn) activeBtn.classList.add("bg-blue-600", "text-white");
 }
 
+window.switchThreatCategory = switchThreatCategory;
+
 // Renders the threat table UI based on current category and aircraft
 function renderThreatTable(category) {
   const tableBody = document.getElementById("threatTableBody");
@@ -567,6 +569,8 @@ function renderConfigurator() {
           { label: "Repeat", key: "Repeat", step: 1, min: 1, max: 24 },
           { label: "Interval", key: "Interval", step: 0.25, min: 0.25, max: 5 },
         ],
+        // Add another plane here in the future
+        // "JF-17" : []
       };
 
       const defaultSchema = [
@@ -626,7 +630,7 @@ function renderConfigurator() {
   manualSections.forEach((s) => manContainer.appendChild(s));
   if (bypassSection) manContainer.appendChild(bypassSection);
 }
-// Trigger file download with aircraft-specific .DTC filename
+// Trigger file download with aircraft-specific .dtc filename
 function downloadJson() {
   const fileName = document.getElementById("filename").value;
 
@@ -644,35 +648,69 @@ function downloadJson() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = fileName.endsWith(".DTC") ? fileName : `${fileName}.DTC`;
+  a.download = fileName.endsWith(".dtc") ? fileName : `${fileName}.dtc`;
   a.click();
   URL.revokeObjectURL(url);
 }
+
+window.downloadJson = downloadJson;
+
 // Load the default DTC JSON for the current aircraft
 async function loadDefaultJson() {
   try {
-    const res = await fetch(
-      currentAircraftType === "F-16C_50"
-        ? "F-16CM_bl50_DTC_1_DEFAULT.json"
-        : "FA-18C_Lot20_DTC1_DEFAULT.json"
-    );
-    jsonData = await res.json();
+    let defaultName = "DTC_Custom.dtc";
+    if (currentAircraftType === "F-16C_50") {
+      const defaultName = `F-16_Custom.dtc`;
+    } else if (currentAircraftType === "FA-18C_Hornet") {
+      const defaultName = `F-18_Custom.dtc`;
+    }
+    // const defaultName = `${currentAircraftType.replace(/_/g, "-")}_Custom.dtc`;
+    document.getElementById("filename").value = defaultName;
 
-    renderConfigurator();
-    renderCommTab();
-    updateTabVisibilityForAircraft(currentAircraftType);
+    const defaultJsonPaths = {
+      "F-16C_50": "defaultDTCs/F-16CM_bl50_DTC_DEFAULT.json",
+      "FA-18C_hornet": "defaultDTCs/FA-18C_Lot20_DTC_DEFAULT.json",
+      // Add future aircraft here:
+      // "F-15E_strike_eagle": "F-15E_DTC1_DEFAULT.json",
+      // "JF-17_thunder": "JF-17_DTC1_DEFAULT.json",
+    };
+
+    const path = defaultJsonPaths[currentAircraftType] || "FA-18C_Lot20_DTC_DEFAULT.json";
+
+    fetch(path)
+      .then((res) => res.json())
+      .then((data) => {
+        jsonData = data;
+        renderConfigurator();
+        renderCommTab();
+        updateTabVisibilityForAircraft(currentAircraftType);
+      })
+      .catch(() => alert("Failed to load default configuration."));
   } catch {
     alert("Failed to load default configuration.");
   }
 }
+
 // Load a custom uploaded DTC file
 document.getElementById("fileInput").addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
   const reader = new FileReader();
+
   reader.onload = (event) => {
     try {
       jsonData = JSON.parse(event.target.result);
 
-      // Detect and set aircraft type
+      // 🔧 Auto-set download filename with "-1" suffix
+      const originalName = file.name;
+      const dotIndex = originalName.lastIndexOf(".");
+      const base = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
+      const ext = dotIndex !== -1 ? originalName.substring(dotIndex) : "";
+      const newName = `${base}-1${ext}`;
+      document.getElementById("filename").value = newName;
+
+      // ✅ Detect and set aircraft type from file
       const detectedType = jsonData?.type || jsonData?.data?.type;
       if (detectedType && aircraftCapabilities[detectedType]) {
         currentAircraftType = detectedType;
@@ -680,7 +718,7 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
         updateTabVisibilityForAircraft(detectedType);
       }
 
-      // Patch COMM channel names if missing
+      // 🛠️ Patch COMM channel names if missing
       if (jsonData?.data?.COMM) {
         ["COMM1", "COMM2"].forEach((commKey) => {
           const comm = jsonData.data.COMM[commKey];
@@ -694,15 +732,22 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
         });
       }
 
+      // 🧩 Render all relevant UI
       renderTabButtons();
+      updateTabVisibilityForAircraft(detectedType);
       renderConfigurator();
       renderCommTab();
+
+      // ✅ Restore correct tab styling
+      switchTab(currentTabId);
     } catch {
       alert("Invalid DTC file.");
     }
   };
-  reader.readAsText(e.target.files[0]);
+
+  reader.readAsText(file);
 });
+
 // Search bar filtering threat table
 document.getElementById("threatSearch").addEventListener("input", () => {
   renderThreatTable(currentThreatCategory);
@@ -712,8 +757,12 @@ document.getElementById("threatSearch").addEventListener("input", () => {
 document.getElementById("aircraftSelect").addEventListener("change", (e) => {
   const selected = e.target.value;
   const previousTab = currentTabId;
-
   currentAircraftType = selected;
+
+  // 🔧 Update the default filename when aircraft changes
+  const defaultName = `${selected.replace(/_/g, "-")}_Custom.dtc`;
+  document.getElementById("filename").value = defaultName;
+
   updateTabVisibilityForAircraft(selected);
 
   const caps = aircraftCapabilities[selected];

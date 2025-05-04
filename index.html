@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMDS Program Editor</title>
 
+    <!-- Favicon -->
+    <!-- <link rel="icon" href="/DCS-DTC-Editor-Web/DTC_Favicon.ico" type="image/x-icon" /> -->
+    <link rel="icon" href="/DCS-DTC-Editor-Web/icons/DTC_Favicon.png" type="image/png" />
+    <!-- Apple touch icon -->
+    <link rel="apple-touch-icon" href="/DCS-DTC-Editor-Web/icons/DTC_Favicon.png" />
+
+    <!-- Open Graph Preview -->
+    <meta property="og:title" content="DCS DTC Web Editor" />
+    <meta property="og:description" content="Edit and create your DTCs online." />
+    <meta
+      property="og:image"
+      content="https://officialdsplayer.github.io/DCS-DTC-Editor-Web/icons/DTC_Icon.png"
+    />
+    <meta property="og:url" content="https://officialdsplayer.github.io//DCS-DTC-Editor-Web/" />
+    <meta property="og:type" content="website" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="F-4E RWR PRF Sound Player" />
+    <meta name="twitter:description" content="Edit and create your DTCs online." />
+    <meta
+      name="twitter:image"
+      content="https://officialdsplayer.github.io/DCS-DTC-Editor-Web/icons/DTC_Icon.png"
+    />
+
     <!-- Tailwind CSS CDN -->
     <link
       rel="stylesheet"
@@ -94,14 +118,26 @@
       <!-- Upload -->
       <div class="w-72">
         <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
-        <input type="file" id="fileInput" accept="application/DTC" class="mb-4 w-full" />
+        <input
+          type="file"
+          id="fileInput"
+          accept="application/dtc"
+          class="mb-4 w-full text-sm overflow-x-auto whitespace-nowrap"
+          style="text-overflow: ellipsis"
+        />
       </div>
 
       <!-- Download -->
       <div class="w-72">
         <p class="mb-2 text-sm">Download your DTC here:</p>
         <div class="flex gap-2">
-          <input type="text" id="filename" value="DTC_Custom.DTC" class="w-full" />
+          <input
+            type="text"
+            id="filename"
+            value="DTC_Custom.dtc"
+            class="w-full text-sm overflow-x-auto whitespace-nowrap"
+            style="text-overflow: ellipsis"
+          />
           <button
             onclick="downloadJson()"
             class="px-4 py-2 bg-blue-600 text-white rounded whitespace-nowrap"
