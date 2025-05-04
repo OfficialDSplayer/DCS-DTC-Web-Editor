@@ -73,10 +73,45 @@
 
     <div id="tabButtons" class="mb-4 flex gap-4"></div>
 
-    <div class="mb-6">
+    <!-- <div class="mb-6">
       <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
       <input type="file" id="fileInput" accept="application/DTC" class="mb-4" />
+      <p class="mb-2 text-sm">Download your DTC here:</p>
+      <input type="text" id="filename" value="DTC_Custom.DTC" />
+      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
+        Download DTC
+      </button>
+    </div> -->
+
+    <div class="flex justify-between gap-8 mb-6">
+      <!-- Upload DTC Section -->
+      <div class="w-72">
+        <p class="mb-2 text-sm">Upload your already existing DTC here:</p>
+        <input type="file" id="fileInput" accept="application/DTC" class="mb-4 w-full" />
+      </div>
+
+      <!-- Download DTC Section -->
+      <div class="w-72">
+        <p class="mb-2 text-sm">Download your DTC here:</p>
+        <div class="flex gap-2">
+          <input type="text" id="filename" value="DTC_Custom.DTC" class="w-full" />
+          <button
+            onclick="downloadJson()"
+            class="px-4 py-2 bg-blue-600 text-white rounded whitespace-nowrap"
+          >
+            Download
+          </button>
+        </div>
+      </div>
     </div>
+
+    <!-- <div class="mt-6 flex gap-4 items-center">
+      <label for="filename">Filename:</label>
+      <input type="text" id="filename" value="DTC_Custom.DTC" />
+      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
+        Download DTC
+      </button>
+    </div> -->
 
     <!-- PROGRAM SETTINGS TAB -->
     <div id="programTab" class="space-y-6">
@@ -192,14 +227,6 @@
           </table>
         </div>
       </div>
-    </div>
-
-    <div class="mt-6 flex gap-4 items-center">
-      <label for="filename">Filename:</label>
-      <input type="text" id="filename" value="DTC_Custom.DTC" />
-      <button onclick="downloadJson()" class="px-4 py-2 bg-blue-600 text-white rounded">
-        Download DTC
-      </button>
     </div>
     <script>
       function capitalize(str) {
