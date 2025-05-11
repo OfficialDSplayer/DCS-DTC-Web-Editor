@@ -303,6 +303,34 @@ function renderThreatTable(category) {
     tableBody.appendChild(tr);
   });
 }
+
+// To dynamically render the COMM tab header
+function renderCommTableHeader(thead) {
+  thead.innerHTML = "";
+
+  const tr = document.createElement("tr");
+  tr.className = "border-b";
+
+  const baseHeaders = ["Channel", "Frequency", "Modulation"];
+  if (currentAircraftType === "FA-18C_hornet") {
+    baseHeaders.push("Name");
+  }
+
+  baseHeaders.forEach((text) => {
+    const th = document.createElement("th");
+    th.className = "p-2 text-left";
+    th.textContent = text;
+    tr.appendChild(th);
+  });
+
+  thead.appendChild(tr);
+}
+
+// Since the modulation mapping is weird
+function getModulationMapping() {
+  return currentAircraftType === "F-16C_50" ? { AM: 1, FM: 0 } : { AM: 0, FM: 1 }; // Default: FA-18C
+}
+
 // Renders editable COMM1 and COMM2 channel data
 function renderCommTab() {
   const commRoot = jsonData?.data?.COMM;
@@ -321,6 +349,12 @@ function renderCommTab() {
 
   // Reusable COMM table renderer for COMM1/COMM2
   const renderCommTable = (comm, tbody, commKey) => {
+    const customLabels = {
+      Channel_C: "Cue",
+      Channel_M: "Manual",
+      Channel_G: "Guard",
+      Channel_S: "Maritime",
+    };
     Object.entries(comm)
       .filter(([key]) => key.startsWith("Channel_"))
       .sort((a, b) => {
@@ -337,7 +371,7 @@ function renderCommTab() {
         // Channel label
         const tdChan = document.createElement("td");
         tdChan.className = "p-2";
-        tdChan.textContent = chan.replace("Channel_", "Channel ");
+        tdChan.textContent = customLabels[chan] || chan.replace("Channel_", "Channel ");
         tr.appendChild(tdChan);
 
         // Frequency input
@@ -364,31 +398,68 @@ function renderCommTab() {
         const tdMod = document.createElement("td");
         tdMod.className = "p-2";
         const selMod = document.createElement("select");
-        ["AM", "FM"].forEach((label, idx) => {
-          const opt = new Option(label, idx);
-          if (details.modulation == idx) opt.selected = true;
+
+        const modMap = getModulationMapping();
+        const reverseModMap = Object.fromEntries(Object.entries(modMap).map(([k, v]) => [v, k]));
+
+        ["AM", "FM"].forEach((label) => {
+          const opt = new Option(label, modMap[label]);
+          if (details.modulation == modMap[label]) opt.selected = true;
           selMod.appendChild(opt);
         });
-        selMod.onchange = () => {
-          details.modulation = parseInt(selMod.value);
-        };
+
+        // Disable modulation change for special channels or locked aircraft
+        const lockedModChannels = ["Channel_C", "Channel_M", "Channel_G", "Channel_S"];
+        const isLockedChannel = lockedModChannels.includes(chan);
+
+        if (!isLockedChannel) {
+          selMod.onchange = () => {
+            details.modulation = parseInt(selMod.value);
+          };
+        } else {
+          selMod.disabled = true;
+          selMod.title = "Modulation is locked for this channel";
+        }
+
+        // if (!isLockedChannel && currentAircraftType !== "F-16C_50") {
+        //   selMod.onchange = () => {
+        //     const selectedVal = parseInt(selMod.value);
+        //     const selectedLabel = reverseModMap[selectedVal];
+        //     details.modulation = modMap[selectedLabel];
+        //   };
+        // } else {
+        //   selMod.disabled = true;
+        //   selMod.title = "Modulation is locked for this channel";
+        // }
+
+        if (currentAircraftType === "F-16C_50") {
+          selMod.disabled = true;
+          // selMod.title = "Modulation is locked for this channel";
+        } else {
+          selMod.onchange = () => {
+            const selectedVal = parseInt(selMod.value);
+            const selectedLabel = reverseModMap[selectedVal];
+            details.modulation = modMap[selectedLabel];
+          };
+        }
+
         tdMod.appendChild(selMod);
         tr.appendChild(tdMod);
 
-        // Channel name input
-        const tdName = document.createElement("td");
-        tdName.className = "p-2";
-        const nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.value = details.name ?? `CH ${chan.replace("Channel_", "")}`;
-        nameInput.className = "w-24";
-        nameInput.onblur = () => {
-          if ("name" in details || currentAircraftType === "FA-18C_hornet") {
+        // Channel name input (only for FA-18C_hornet)
+        if (currentAircraftType === "FA-18C_hornet") {
+          const tdName = document.createElement("td");
+          tdName.className = "p-2";
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.value = details.name ?? `CH ${chan.replace("Channel_", "")}`;
+          nameInput.className = "w-24";
+          nameInput.onblur = () => {
             details.name = nameInput.value;
-          }
-        };
-        tdName.appendChild(nameInput);
-        tr.appendChild(tdName);
+          };
+          tdName.appendChild(nameInput);
+          tr.appendChild(tdName);
+        }
 
         tbody.appendChild(tr);
       });
@@ -400,7 +471,7 @@ function renderCommTab() {
           <td colspan="4" class="p-2 pt-4">
             <label>
               <input type="checkbox" id="guardToggle-${commKey}" ${comm.Guard ? "checked" : ""}/>
-              Guard Enabled
+              GUARD Receiver Enable
             </label>
           </td>
         `;
@@ -416,6 +487,12 @@ function renderCommTab() {
   // Render both COMM tables
   renderCommTable(comm1, comm1Body, "comm1");
   renderCommTable(comm2, comm2Body, "comm2");
+
+  const comm1Head = document.querySelector("#comm1Table thead");
+  const comm2Head = document.querySelector("#comm2Table thead");
+
+  renderCommTableHeader(comm1Head);
+  renderCommTableHeader(comm2Head);
 }
 function renderConfigurator() {
   const settings = dtcPaths[currentAircraftType]?.programSettings?.();
