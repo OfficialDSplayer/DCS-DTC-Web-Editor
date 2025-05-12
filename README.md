@@ -2,7 +2,7 @@
 
 A web-based method of creating and editing the DTC file for the DCS F/A-18C Hornet and F-16C Viper.
 
-![icon](icons/DTC_Icon.png)
+![icon](icons/DTC_Icon_Smaller.png)
 
 🔗 **Live Site:**
 [officialdsplayer.github.io/DCS-DTC-Web-Editor/](https://officialdsplayer.github.io/DCS-DTC-Web-Editor/)
