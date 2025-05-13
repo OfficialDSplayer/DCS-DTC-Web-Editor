@@ -638,9 +638,9 @@ function renderConfigurator() {
       // Per-aircraft parameter schema
       const paramSchemaMap = {
         "F-16C_50": [
-          { label: "Burst Qty", key: "BurstQuantity", step: 1, min: 1, max: 99 },
+          { label: "Burst Qty", key: "BurstQuantity", step: 1, min: 0, max: 99 },
           { label: "Burst Interval", key: "BurstInterval", step: 0.001, min: 0.02, max: 10 },
-          { label: "Salvo Qty", key: "SalvoQuantity", step: 1, min: 1, max: 99 },
+          { label: "Salvo Qty", key: "SalvoQuantity", step: 1, min: 0, max: 99 },
           { label: "Salvo Interval", key: "SalvoInterval", step: 0.01, min: 0.5, max: 150 },
         ],
         "FA-18C_hornet": [
