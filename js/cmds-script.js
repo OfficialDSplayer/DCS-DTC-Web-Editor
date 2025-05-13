@@ -585,8 +585,8 @@ function renderConfigurator() {
     globalDelayInput.onblur = () => {
       let v = parseFloat(globalDelayInput.value);
       if (!isNaN(v)) {
-        v = Math.round(v / 0.25) * 0.25;
-        v = Math.max(0, Math.min(99, v));
+        v = Math.round(v / 1) * 1;
+        v = Math.max(0, Math.min(10, v));
         globalDelayInput.value = v;
 
         if (currentAircraftType === "FA-18C_hornet")
