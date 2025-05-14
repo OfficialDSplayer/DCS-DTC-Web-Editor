@@ -281,24 +281,30 @@ function renderThreatTable(category) {
     const tdProg = document.createElement("td");
     tdProg.className = "p-2";
     const selProg = document.createElement("select");
-
-    Object.entries(friendlyNames)
-      .filter(([k]) => k.startsWith("AUTO_"))
-      .forEach(([key, label]) => {
-        const num = parseInt(key.split("_")[1]);
-        const option = document.createElement("option");
-        option.value = num;
-        option.textContent = label;
-        if (entry.program === num) option.selected = true;
-        selProg.appendChild(option);
-      });
-
+    
+    // Define custom program options
+    const programOptions = [
+      { value: 0, label: "None" },
+      { value: 1, label: "Auto 1" },
+      { value: 2, label: "Auto 2" },
+      { value: 3, label: "Auto 3" },
+    ];
+    
+    programOptions.forEach(({ value, label }) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      if (entry.program === value) option.selected = true;
+      selProg.appendChild(option);
+    });
+    
     selProg.onchange = () => {
       entry.program = parseInt(selProg.value);
     };
-
+    
     tdProg.appendChild(selProg);
     tr.appendChild(tdProg);
+
 
     tableBody.appendChild(tr);
   });
