@@ -754,8 +754,8 @@ async function loadDefaultJson() {
     document.getElementById("filename").value = defaultName;
 
     const defaultJsonPaths = {
-      "F-16C_50": "defaultDTCs/F-16CM_bl50_DTC_DEFAULT.json",
-      "FA-18C_hornet": "defaultDTCs/FA-18C_Lot20_DTC_DEFAULT.json",
+      "F-16C_50": "defaultDTCs/F-16CM bl.50 DTC_1 DEFAULT.dtc",
+      "FA-18C_hornet": "defaultDTCs/FA-18C Lot 20 DTC_1 DEFAULT.dtc",
       // Add future aircraft here:
       // "F-15E_strike_eagle": "F-15E_DTC1_DEFAULT.json",
       // "JF-17_thunder": "JF-17_DTC1_DEFAULT.json",
