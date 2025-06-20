@@ -283,12 +283,24 @@ function renderThreatTable(category) {
     const selProg = document.createElement("select");
 
     // Define custom program options
-    const programOptions = [
-      { value: 0, label: "None" },
-      { value: 1, label: "Auto 1" },
-      { value: 2, label: "Auto 2" },
-      { value: 3, label: "Auto 3" },
-    ];
+    let programOptions;
+
+    // Because in 2.9.17 they decided to do this:
+    if (currentAircraftType === "FA-18C_hornet") {
+      programOptions = [
+        { value: 0, label: "None" },
+        { value: 7, label: "Auto 1" },
+        { value: 8, label: "Auto 2" },
+        { value: 9, label: "Auto 3" },
+      ];
+    } else if (currentAircraftType === "F-16C_50") {
+      programOptions = [
+        { value: 1, label: "None" },
+        { value: 2, label: "Auto 1" },
+        { value: 3, label: "Auto 2" },
+        { value: 4, label: "Auto 3" },
+      ];
+    }
 
     programOptions.forEach(({ value, label }) => {
       const option = document.createElement("option");
