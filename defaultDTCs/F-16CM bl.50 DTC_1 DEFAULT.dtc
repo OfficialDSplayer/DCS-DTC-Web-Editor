@@ -447,7 +447,7 @@
                                                                                                                     },
                                                                                                       "group_name": "A-50",
                                                                                                             "hint": "A-50",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -464,7 +464,7 @@
                                                                                                                     },
                                                                                                       "group_name": "AH-64",
                                                                                                             "hint": "AH-64D BLK.II",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "AH-64D_BLK_II",
@@ -481,7 +481,7 @@
                                                                                                                     },
                                                                                                       "group_name": "AJS37",
                                                                                                             "hint": "AJS37",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "AJS37",
@@ -498,7 +498,7 @@
                                                                                                                     },
                                                                                                       "group_name": "E-2",
                                                                                                             "hint": "E-2D",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -515,7 +515,7 @@
                                                                                                                     },
                                                                                                       "group_name": "E-3",
                                                                                                             "hint": "E-3A",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -730,7 +730,7 @@
                                                                                                                     },
                                                                                                       "group_name": "KJ-2000",
                                                                                                             "hint": "KJ-2000",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "KJ-2000",
@@ -1164,7 +1164,7 @@
                                                                                                                     },
                                                                                                       "group_name": "EWR 1L13",
                                                                                                             "hint": "EWR 1L13",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1181,7 +1181,7 @@
                                                                                                                     },
                                                                                                       "group_name": "EWR 55G6",
                                                                                                             "hint": "EWR 55G6",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1198,7 +1198,7 @@
                                                                                                                     },
                                                                                                       "group_name": "EWR AN/FPS-117",
                                                                                                             "hint": "EWR AN/FPS-117 Radar\nEWR AN/FPS-117 Radar (domed)",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "FPS-117",
@@ -1239,7 +1239,7 @@
                                                                                                                     },
                                                                                                       "group_name": "MCC Sborka - Dog Ear",
                                                                                                             "hint": "MCC-SR Sborka Dog Ear SR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1256,7 +1256,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM Hawk – MPQ-50",
                                                                                                             "hint": "SAM Hawk SR (AN/MPQ-50)",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1273,7 +1273,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM Hawk - MPQ-55",
                                                                                                             "hint": "SAM Hawk CWAR AN/MPQ-55",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1333,7 +1333,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM HQ-7 - ACU",
                                                                                                             "hint": "HQ-7 Self-Propelled STR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "HQ-7_STR_SP",
@@ -1350,7 +1350,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM NASAMS - MPQ-64",
                                                                                                             "hint": "SAM NASAMS SR MPQ64F1",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "NASAMS_Radar_MPQ64F1",
@@ -1390,7 +1390,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM Rapier",
                                                                                                             "hint": "SAM Rapier LN",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "rapier_fsa_launcher",
@@ -1450,7 +1450,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM Roland - EWR",
                                                                                                             "hint": "SAM Roland EWR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1556,7 +1556,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-5/10 - Tin Shield",
                                                                                                             "hint": "SAM SA-5 S-200 ST-68U Tin Shield SR\nSAM SA-10 S-300 Grumble Tin Shield SR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "RLS_19J6",
@@ -1599,7 +1599,7 @@
                                                                                                                         "label": "TRACK"
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-6 'Gainful'",
-                                                                                                            "hint": "SAM SA-6 Kub Gainful Straight Flush STR",
+                                                                                                            "hint": "SAM SA-6 Kub Straight Flush STR",
                                                                                                          "program": 3,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
@@ -1646,7 +1646,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-10 'Grumble' - Big Bird",
                                                                                                             "hint": "SAM SA-10 S-300 Grumble Big Bird SR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1663,7 +1663,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-10 'Grumble' - Clam Shell",
                                                                                                             "hint": "SAM SA-10 S-300 Grumble Clam Shell SR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -1707,7 +1707,7 @@
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-11 'Gadfly' - Snow Drift",
                                                                                                             "hint": "SAM SA-11 Buk Gadfly Snow Drift SR",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -2230,7 +2230,7 @@
                                                                                                                     },
                                                                                                       "group_name": "Ropucha I large landing ship",
                                                                                                             "hint": "LS Ropucha",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "BDK-775",
@@ -2270,7 +2270,7 @@
                                                                                                                     },
                                                                                                       "group_name": "Tarantul III missile corvette",
                                                                                                             "hint": "Corvette 1241.1 Molniya",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
@@ -2330,7 +2330,7 @@
                                                                                                                     },
                                                                                                       "group_name": "Yuzhao amphibious transport dock",
                                                                                                             "hint": "Type 071 Amphibious Transport Dock",
-                                                                                                         "program": 3,
+                                                                                                         "program": 1,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "Type_071",
