@@ -399,15 +399,23 @@ function renderCommTab() {
         freqInput.step = "0.01";
         freqInput.value = details.frequency ?? details.freq ?? "";
         freqInput.className = "w-24";
-        freqInput.onblur = () => {
-          const val = parseFloat(freqInput.value);
-          if (!isNaN(val)) {
-            if ("frequency" in details) details.frequency = val;
-            else if ("freq" in details) details.freq = val;
-          } else {
-            freqInput.value = details.frequency ?? details.freq ?? "";
-          }
-        };
+
+        // Lock out the GUARD freq from being modifiable.
+        const isGuardChannel = chan === "Channel_G" && currentAircraftType === "FA-18C_hornet";
+        if (isGuardChannel) {
+          freqInput.disabled = true;
+          freqInput.title = "GUARD frequency is locked for F/A-18C";
+        } else {
+          freqInput.onblur = () => {
+            const val = parseFloat(freqInput.value);
+            if (!isNaN(val)) {
+              if ("frequency" in details) details.frequency = val;
+              else if ("freq" in details) details.freq = val;
+            } else {
+              freqInput.value = details.frequency ?? details.freq ?? "";
+            }
+          };
+        }
         tdFreq.appendChild(freqInput);
         tr.appendChild(tdFreq);
 
@@ -471,9 +479,14 @@ function renderCommTab() {
           nameInput.type = "text";
           nameInput.value = details.name ?? `CH ${chan.replace("Channel_", "")}`;
           nameInput.className = "w-24";
-          nameInput.onblur = () => {
-            details.name = nameInput.value;
-          };
+          if (isGuardChannel) {
+            nameInput.disabled = true;
+            nameInput.title = "GUARD name is locked for F/A-18C";
+          } else {
+            nameInput.onblur = () => {
+              details.name = nameInput.value;
+            };
+          }
           tdName.appendChild(nameInput);
           tr.appendChild(tdName);
         }
@@ -511,6 +524,7 @@ function renderCommTab() {
   renderCommTableHeader(comm1Head);
   renderCommTableHeader(comm2Head);
 }
+
 function renderConfigurator() {
   const settings = dtcPaths[currentAircraftType]?.programSettings?.();
   if (!settings) return;
