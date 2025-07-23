@@ -1385,6 +1385,29 @@
                                                                                                                     } ]
                                                                                            }, {
                                                                                                "default_threshold": {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    },
+                                                                                                      "group_name": "SAM IRIS-T",
+                                                                                                            "hint": "SAM IRIS-T SLM STR [CH]",
+                                                                                                         "program": 3,
+                                                                                                         "threats": [ {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "CHAP_IRISTSLM_STR",
+                                                                                                                             "wstype": [  ]
+                                                                                                                    } ],
+                                                                                                      "thresholds": [ {
+                                                                                                                        "index": 1,
+                                                                                                                        "label": "SEARCH"
+                                                                                                                    }, {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    }, {
+                                                                                                                        "index": 3,
+                                                                                                                        "label": "LAUNCH"
+                                                                                                                    } ]
+                                                                                           }, {
+                                                                                               "default_threshold": {
                                                                                                                         "index": 1,
                                                                                                                         "label": "SEARCH"
                                                                                                                     },
@@ -1766,12 +1789,16 @@
                                                                                                                         "label": "TRACK"
                                                                                                                     },
                                                                                                       "group_name": "SAM SA-15 'Gauntlet'",
-                                                                                                            "hint": "SAM SA-15 Tor Gauntlet",
+                                                                                                            "hint": "SAM SA-15 Tor Gauntlet\nSAM SA-15 Tor M2 Gauntlet [CH]",
                                                                                                          "program": 3,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
                                                                                                                           "unit_type": "",
                                                                                                                              "wstype": [ 2, 16, 102, 28 ]
+                                                                                                                    }, {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "CHAP_TorM2",
+                                                                                                                             "wstype": [  ]
                                                                                                                     } ],
                                                                                                       "thresholds": [ {
                                                                                                                         "index": 1,
@@ -1802,6 +1829,29 @@
                                                                                                                     }, {
                                                                                                                         "index": 2,
                                                                                                                         "label": "TRACK"
+                                                                                                                    } ]
+                                                                                           }, {
+                                                                                               "default_threshold": {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    },
+                                                                                                      "group_name": "SAM SA-22 'Greyhound'",
+                                                                                                            "hint": "SAM SA-22 Pantsir-S1 Greyhound [CH]",
+                                                                                                         "program": 3,
+                                                                                                         "threats": [ {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "CHAP_PantsirS1",
+                                                                                                                             "wstype": [  ]
+                                                                                                                    } ],
+                                                                                                      "thresholds": [ {
+                                                                                                                        "index": 1,
+                                                                                                                        "label": "SEARCH"
+                                                                                                                    }, {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    }, {
+                                                                                                                        "index": 3,
+                                                                                                                        "label": "LAUNCH"
                                                                                                                     } ]
                                                                                            }, {
                                                                                                "default_threshold": {
@@ -2340,6 +2390,53 @@
                                                                                                                         "index": 1,
                                                                                                                         "label": "SEARCH"
                                                                                                                     } ]
+                                                                                           }, {
+                                                                                               "default_threshold": {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    },
+                                                                                                      "group_name": "Project 22160 Patrol Ship",
+                                                                                                            "hint": "Project 22160 Patrol Ship [CH]\nProject 22160 Patrol Ship with Tor M2KM [CH]",
+                                                                                                         "program": 3,
+                                                                                                         "threats": [ {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "CHAP_Project22160",
+                                                                                                                             "wstype": [  ]
+                                                                                                                    }, {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "CHAP_Project22160_TorM2KM",
+                                                                                                                             "wstype": [  ]
+                                                                                                                    } ],
+                                                                                                      "thresholds": [ {
+                                                                                                                        "index": 1,
+                                                                                                                        "label": "SEARCH"
+                                                                                                                    }, {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    }, {
+                                                                                                                        "index": 3,
+                                                                                                                        "label": "LAUNCH"
+                                                                                                                    } ]
+                                                                                           }, {
+                                                                                               "default_threshold": {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    },
+                                                                                                      "group_name": "FAC La Combattante IIa",
+                                                                                                            "hint": "FAC La Combattante IIa",
+                                                                                                         "program": 3,
+                                                                                                         "threats": [ {
+                                                                                                                        "displayName": "",
+                                                                                                                          "unit_type": "La_Combattante_II",
+                                                                                                                             "wstype": [  ]
+                                                                                                                    } ],
+                                                                                                      "thresholds": [ {
+                                                                                                                        "index": 1,
+                                                                                                                        "label": "SEARCH"
+                                                                                                                    }, {
+                                                                                                                        "index": 2,
+                                                                                                                        "label": "TRACK"
+                                                                                                                    } ]
                                                                                            } ],
                                                                                   "Other": [ {
                                                                                                "default_threshold": {
@@ -2351,7 +2448,8 @@
                                                                                                          "program": 3,
                                                                                                          "threats": [ {
                                                                                                                         "displayName": "",
-                                                                                                                          "unit_type": ""
+                                                                                                                          "unit_type": "",
+                                                                                                                             "wstype": [ 4, 4, 8, 59 ]
                                                                                                                     } ],
                                                                                                       "thresholds": [ {
                                                                                                                         "index": 3,
